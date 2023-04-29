@@ -1,3 +1,9 @@
 Create a personal github **Done**
-Custom my account
-Custom create a export a program
+Custom my account **Done**
+Custom create a export a program **Done** ( it was the just the .gitingore)
+Custom different Transformers architectures by modifing the self.architecture :
+	- tensorflow by tfm
+	- pytorch 
+	- hugging face
+
+
