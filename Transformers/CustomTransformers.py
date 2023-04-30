@@ -26,12 +26,13 @@ custom_transformer_block = CustomTransformerEncoderBlock(
     attention_layer=custom_attention,
     feedforward_layer=custom_ffn,
     inner_activation="gelu",
-    num_attention_heads = 27,
+    num_attention_heads = 3,
     key_dim = 64,
     inner_dim=25
 )
 tensor_3 = tf.random.uniform((32,24,9))
 print(custom_transformer_block([tensor_3,None]))
+exit()
 
 class LearnedPositionalEncoding(tf.keras.layers.Layer):
     def __init__(self, max_position, d_model):
