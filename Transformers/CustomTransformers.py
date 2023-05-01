@@ -1,16 +1,50 @@
 import tensorflow as tf
 import tensorflow_models as tfm
-
-
+from typing import Union
+tfm.nlp.layers.KernelAttention
 class CustomTransformerEncoderBlock(tfm.nlp.layers.TransformerEncoderBlock):
-    def __init__(self, attention_layer, feedforward_layer, *args, **kwargs):
+    def __init__(self, attention_layer: Union[str,tf.keras.layers], feedforward_layer: Union[str,tf.keras.layers],num_random_features=None, feature_transform=None,*args, **kwargs):
+        self._attention_layer = None
         self.attention_layer = attention_layer
         self.feedforward_layer = feedforward_layer
+        self.num_random_features = num_random_features
+        self.feature_transform = feature_transform
         super(CustomTransformerEncoderBlock, self).__init__(*args, **kwargs)
 
     def build(self, input_shape):
         super(CustomTransformerEncoderBlock, self).build(input_shape)
-        self._attention_layer = self.attention_layer
+        if self.attention_layer in ["MultiHeadAttention", "TalkingHeadsAttention", "MultiChannelAttention"]:
+            self._attention_layer = getattr(tfm.nlp.layers, self.attention_layer)(
+                                num_heads=self._num_heads,
+                                key_dim=self._key_dim,
+                                value_dim=self._value_dim,
+                                dropout=self._attention_dropout_rate,
+                                use_bias=self._use_bias,
+                                kernel_initializer=self._attention_initializer,
+                                bias_initializer=tf_utils.clone_initializer(self._bias_initializer),
+                                attention_axes=self._attention_axes,
+                                output_shape=self._output_last_dim,
+                                name=f"{self.attention_layer}_attention")
+
+        elif self.attention_layer == "KernelAttention":
+            self._attention_layer = tfm.nlp.layers.KernelAttention(
+                            feature_transform='exp',
+                            num_random_features=256,
+                            seed=0,
+                            redraw=False,
+                            is_short_seq=False,
+                            begin_kernel=0,
+                            scale=None,
+                            scale_by_length=False,
+                            use_causal_windowed=False,
+                            causal_chunk_length=1,
+                            causal_window_length=3,
+                            causal_window_decay=None,
+                            causal_padding=None
+                            )
+        else:
+            self.attention_layer = self.attention_layer
+
         self._intermediate_dense = self.feedforward_layer
 
     def call(self, inputs):
@@ -106,7 +140,7 @@ simple_gpt = GPT(vocab_size, d_model, nhead, num_layers)
 # limitations under the License.
 
 """Keras-based TransformerEncoder block layer."""
-from typing import Any, Optional
+from typing import Any, Optional, Union
 from absl import logging
 import tensorflow as tf
 
