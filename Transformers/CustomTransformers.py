@@ -196,7 +196,7 @@ class CustomTransformerEncoderBlock(tfm.nlp.layers.TransformerEncoderBlock):
             Returns:
                 The output tensor.
         """
-        return super().call(inputs)
+        return tf.keras.layers.LayerNormalization()(super().call(inputs))
 
 
 # Instantiate the custom TransformerEncoderBlock with the custom layers
@@ -210,6 +210,18 @@ custom_transformer_block = CustomTransformerEncoderBlock(
 )
 tensor_3 = tf.ones((32, 24, 24))
 tensor_34 = tf.ones((32, 12, 24))
+print(custom_transformer_block([tensor_3, tensor_34, None]))
+
+custom_transformer_block = CustomTransformerEncoderBlock(
+    attention_layer="MultiHeadAttention",
+    feedforward_layer=None,
+    inner_activation="gelu",
+    num_attention_heads=3,
+    key_dim=24,
+    inner_dim=12
+)
+tensor_3 = tf.ones((55, 24, 24))
+tensor_34 = tf.ones((55, 12, 24))
 print(custom_transformer_block([tensor_3, tensor_34, None]))
 
 exit()
