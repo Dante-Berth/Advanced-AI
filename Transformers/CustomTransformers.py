@@ -100,8 +100,8 @@ class CustomTransformerEncoderBlock(tfm.nlp.layers.TransformerEncoderBlock):
             "hyperparameter_feedforward_layer": ["GatedFeedforward","None"],
             "hyperparameter_feature_transform" : ["identity", "sqrt", "erf", "relu", "leaky_relu", "elu", "gelu", "sin"],
             "hyperparameter_num_blocks_intermediate" : ["1","10","1"],
-            "hyperparameter_num_random_features" : ["8","256","8"],
-            "hyperparameter_num_blocks_output" : ["1","10","1"]
+            "hyperparameter_num_random_features" : ["8,256,8"],
+            "hyperparameter_num_blocks_output" : ["1,10,1"]
         }
         super(CustomTransformerEncoderBlock, self).__init__(*args, **kwargs)
 
