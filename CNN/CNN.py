@@ -1,18 +1,5 @@
 import tensorflow as tf
-import numpy as np
-import pandas as pd
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import tensorflow.keras
-from keras.regularizers import l2
-import tensorflow as tf
-from keras import regularizers
-from keras.activations import *
-from tensorflow.keras.layers import Dense, Flatten, MaxPooling1D, Dropout, BatchNormalization, Input, Conv1D, \
-    AveragePooling1D, Concatenate, LSTM, SimpleRNN, LSTM, Bidirectional, TimeDistributed, ConvLSTM2D, Concatenate, \
-    Dropout
-from tensorflow.keras.models import Model
-import optuna
+
 
 
 class MetaPoolingLayer(tf.keras.layers.Layer):
@@ -92,18 +79,18 @@ class CNN_Layer(tf.keras.layers.Layer):
                 else:
                     self.pooling_layer_name = "MaxPooling2D"
 
-            self.pooling_layer = getattr(tensorflow.keras.layers, self.pooling_layer_name)(self.pool_size, self.strides,
+            self.pooling_layer = getattr(tf.keras.layers, self.pooling_layer_name)(self.pool_size, self.strides,
                                                                                            padding="same",
                                                                                            data_format="channels_last")
 
         if len(input_shape) == 3 or self.pooling_layer_name in ["AveragePooling1D", "MaxPooling1D"] and tf.shape(input) == 4:
-            self.cn_layer = tensorflow.keras.layers.Conv1D(filters=self.filters,
+            self.cn_layer = tf.keras.layers.Conv1D(filters=self.filters,
                                                            kernel_size=self.kernel_size,
                                                            strides=self.strides,
                                                            padding="same",
                                                            data_format="channels_last")
         else:
-            self.cn_layer = tensorflow.keras.layers.Conv2D(filters=self.filters,
+            self.cn_layer = tf.keras.layers.Conv2D(filters=self.filters,
                                                            kernel_size=self.kernel_size,
                                                            strides=self.strides,
                                                            padding="same",
