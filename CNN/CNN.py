@@ -15,9 +15,9 @@ from tensorflow.keras.models import Model
 import optuna
 
 
-class MetaPoolinglayer(tf.keras.layers.Layer):
+class MetaPoolingLayer(tf.keras.layers.Layer):
     def __init__(self, pool_size, strides):
-        super(MetaPoolinglayer, self).__init__()
+        super(MetaPoolingLayer, self).__init__()
         self.pool_size = pool_size
         self.strides = strides
         self.weight_average = self.add_weight(
@@ -62,66 +62,66 @@ class MetaPoolinglayer(tf.keras.layers.Layer):
             inputs) + self.weight_average * self.average_pooling_layer(inputs)
 
 
-class CNN_layer(tf.keras.layers.Layers):
+class CNN_Layer(tf.keras.layers.Layer):
 
-    def __init__(self, filters, kernel_size, activation, pool_size, strides, pooling_layer_name):
+    def __init__(self, filters: int, kernel_size: int, activation: tf.keras.activations, pool_size: int, strides: int, pooling_layer_name: str):
+        super(CNN_Layer, self).__init__()
         self.filters = filters
         self.kernel_size = kernel_size
         self.activation = activation
         self.pool_size = pool_size
         self.strides = strides
         self.pooling_layer_name = pooling_layer_name
+        self.cn_layer = None
+        self.pooling_layer= None
+        print("init")
+
 
     def build(self, input_shape):
-        if self.pooling_layer_name in ["AveragePooling1D", "MaxPooling1D", "AveragePooling2D", "MaxPooling2D","Conv1D", "Conv2D"]:
+        if self.pooling_layer_name == "MetaPoolingLayer":
+            self.pooling_layer = MetaPoolingLayer(self.pool_size, self.strides)
+        else:
             if len(input_shape) == 3 and self.pooling_layer_name in ["AveragePooling2D", "MaxPooling2D"]:
                 if self.pooling_layer_name == "AveragePooling2D":
                     self.pooling_layer_name = "AveragePooling1D"
                 else:
                     self.pooling_layer_name = "MaxPooling1D"
+            if len(input_shape) == 4 and self.pooling_layer_name in ["AveragePooling1D", "MaxPooling1D"]:
+                if self.pooling_layer_name == "AveragePooling1D":
+                    self.pooling_layer_name = "AveragePooling2D"
+                else:
+                    self.pooling_layer_name = "MaxPooling2D"
 
-        self.pooling_layer = getattr(tensorflow.keras.layers, self.pooling_layer_name)(self.pool_size, self.strides,
-                                                                                       padding="same",
-                                                                                       data_format="channels_last")
+            self.pooling_layer = getattr(tensorflow.keras.layers, self.pooling_layer_name)(self.pool_size, self.strides,
+                                                                                           padding="same",
+                                                                                           data_format="channels_last")
 
-    def call(self, input):
-        if self.pooling_layer_name in ["AveragePooling1D", "MaxPooling1D"] and tf.shape(input) == 4:
-            a,b,c,d = tf.shape(input)
-            input = tf.reshape(input,(a,b,c*d))
+        if len(input_shape) == 3 or self.pooling_layer_name in ["AveragePooling1D", "MaxPooling1D"] and tf.shape(input) == 4:
+            self.cn_layer = tensorflow.keras.layers.Conv1D(filters=self.filters,
+                                                           kernel_size=self.kernel_size,
+                                                           strides=self.strides,
+                                                           padding="same",
+                                                           data_format="channels_last")
+        else:
+            self.cn_layer = tensorflow.keras.layers.Conv2D(filters=self.filters,
+                                                           kernel_size=self.kernel_size,
+                                                           strides=self.strides,
+                                                           padding="same",
+                                                           data_format="channels_last")
+        self.batch_norm = tf.keras.layers.BatchNormalization()
 
-        pooling_layer = self.pooling_layer(input)
+    def call(self, input, **kwargs):
+        x = self.cn_layer(input)
+        x = self.activation(x)
+        x = self.pooling_layer(x)
+        x = self.batch_norm(x)
+        return x
+
+tensor_3 = tf.ones((12,24,36))
+tensor_4 = tf.ones((12,24,36,48))
+a = CNN_Layer(filters=3, kernel_size=2, activation=tf.keras.activations.gelu, pool_size=3, strides=3, pooling_layer_name="AveragePooling1D")
+print(a(tensor_3))
+print(CNN_Layer(3, 2, tf.keras.activations.gelu, 3, 3, "AveragePooling1D")(tensor_4))
+print(CNN_Layer(3, 2, tf.keras.activations.gelu, 3, 3, "MetaPoolingLayer")(tensor_4))
 
 
-
-def CNN_POOLING_layer(image, filters, kernel_size, activation, pool_size, stride, pooling_layer):
-    output = Conv1D(filters=filters,
-                    kernel_size=kernel_size,
-                    activation=activation, padding="same")(image)
-    output = BatchNormalization()(output)
-    if pooling_layer == "AveragePooling1D":
-        pool_layer = tf.keras.layers.AveragePooling1D
-    elif pooling_layer == "MaxPooling1D":
-        pool_layer = tf.keras.layers.MaxPooling1D
-
-    output = pool_layer(pool_size=pool_size, strides=stride,
-                        padding='same')(output)
-    return output
-
-
-def loop_CNN_layer(first_input, n_layers, trial, name_layer):
-    CNN_OUTPUT = [f'{name_layer}_CNN_layers_outputs_{i}' for i in range(0, n_layers + 1)]
-    CNN_OUTPUT[0] = first_input
-    i = 0
-    while i < n_layers:
-        filters = trial.suggest_int(f'{name_layer}_CNN_filters_{i + 1}', 4, 128, log=True)
-        kernel_size = trial.suggest_int(f'{name_layer}_CNN_kernel_size_{i + 1}', 1, 3, step=1),
-        activation = trial.suggest_categorical(f'{name_layer}_CNN_activation_{i + 1}', ['gelu', 'tanh', 'swish'])
-        pooling_layer = trial.suggest_categorical(f'{name_layer}_CNN_pooling_layer_{i + 1}',
-                                                  ['AveragePooling1D', 'MaxPooling1D'])
-        pool_size = trial.suggest_int(f'{name_layer}_CNN_pool_size_{i + 1}', 1, 4, step=1)
-        stride = trial.suggest_int(f'{name_layer}_CNN_stride_{i + 1}', 1, 4, step=1)
-        CNN_OUTPUT[i + 1] = CNN_POOLING_layer(CNN_OUTPUT[i], filters, kernel_size, activation, pool_size, stride,
-                                              pooling_layer)
-        i = i + 1
-        last_rank = i
-    return CNN_OUTPUT
