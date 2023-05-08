@@ -2,7 +2,24 @@ import tensorflow as tf
 import tensorflow_models as tfm
 from official.modeling import tf_utils
 from official.nlp.modeling.layers import util
-
+def transform_tensors(tensors):
+    """
+    list of tensors, and you want to transform them into tensors of shape
+    :param tensors: tf.Tensor
+    :return: list of tensors of shape (batch_size, sequence_length, embedding_size)
+    """
+    transformed_tensors = []
+    for tensor in tensors:
+        if tensor is None:
+            transformed_tensors.append(None)
+        else:
+            shape = tf.shape(tensor)
+            batch_size = shape[0]
+            sequence_length = shape[1]
+            embedding_size = tf.reduce_prod(shape[2:])
+            transformed_tensor = tf.reshape(tensor, (batch_size, sequence_length, embedding_size))
+            transformed_tensors.append(transformed_tensor)
+    return transformed_tensors
 
 class LearnedPositionalEncoding(tf.keras.layers.Layer):
     """
@@ -217,20 +234,24 @@ custom_transformer_block = CustomTransformerEncoderBlock(
     key_dim=64,
     inner_dim=25
 )
-tensor_3 = tf.ones((32, 24, 24))
-tensor_34 = tf.ones((32, 12, 24))
-print(custom_transformer_block([tensor_3, tensor_34, None]))
+tensor_3 = tf.ones((48, 24, 24))
+tensor_34 = tf.ones((48, 12, 24))
+print(custom_transformer_block(transform_tensors([tensor_3, tensor_34, None])))
 
 custom_transformer_block = CustomTransformerEncoderBlock(
-    attention_layer="MultiHeadAttention",
-    feedforward_layer=None,
+    attention_layer="KernelAttention",
+    feedforward_layer="GatedFeedforward",
     inner_activation="gelu",
-    num_attention_heads=3,
-    key_dim=24,
-    inner_dim=12
+    num_attention_heads=4,
+    key_dim=12,
+    inner_dim=8
 )
-tensor_3 = tf.ones((55, 24, 24))
-tensor_34 = tf.ones((55, 12, 24))
-print(custom_transformer_block([tensor_3, tensor_34, None]))
 
-exit()
+
+
+tensor_123 = tf.ones((4, 5, 6, 7))
+tensor_456 = tf.ones((4, 5, 6, 7))
+
+print(custom_transformer_block(transform_tensors([tensor_123, tensor_456, None])))
+print("success")
+
