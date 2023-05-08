@@ -1,8 +1,9 @@
 import tensorflow as tf
 
-
-
 class MetaPoolingLayer(tf.keras.layers.Layer):
+    """
+    MetaPoolingLayer generalizes the concept of the pooling layer, can handle input of different size either 3 or either 4
+    """
     def __init__(self, pool_size, strides):
         super(MetaPoolingLayer, self).__init__()
         self.pool_size = pool_size
@@ -50,6 +51,9 @@ class MetaPoolingLayer(tf.keras.layers.Layer):
 
 
 class CNN_Layer(tf.keras.layers.Layer):
+    """
+    CNN_layer generalizes the concept of CNN,  can handle input of different size either 3 or either 4
+    """
 
     def __init__(self, filters: int, kernel_size: int, activation: tf.keras.activations, pool_size: int, strides: int, pooling_layer_name: str):
         super(CNN_Layer, self).__init__()
@@ -61,7 +65,15 @@ class CNN_Layer(tf.keras.layers.Layer):
         self.pooling_layer_name = pooling_layer_name
         self.cn_layer = None
         self.pooling_layer= None
-        print("init")
+
+    def get_hyperparameter(self):
+        self.hyperparameter = {
+            "hyperparameter_filters": [8, 256, 8],
+            "hyperparameter_kernel_size": [1, 10, 1],
+            "hyperparameter_pool_size": [1, 10, 1],
+            "hyperparameter_strides": [1, 10, 1],
+            "hyperparameter_pooling_layer_name": ["MetaPoolingLayer", "AveragePooling2D", "MaxPooling2D","AveragePooling1D","MaxPooling1D"]
+        }
 
 
     def build(self, input_shape):
@@ -95,18 +107,20 @@ class CNN_Layer(tf.keras.layers.Layer):
                                                            strides=self.strides,
                                                            padding="same",
                                                            data_format="channels_last")
-        self.batch_norm = tf.keras.layers.BatchNormalization()
+        self.batch_norm_1 = tf.keras.layers.BatchNormalization()
+        self.batch_norm_2 = tf.keras.layers.BatchNormalization()
 
     def call(self, input, **kwargs):
         x = self.cn_layer(input)
+        x = self.batch_norm_1(x)
         x = self.activation(x)
         x = self.pooling_layer(x)
-        x = self.batch_norm(x)
+        x = self.batch_norm_2(x)
         return x
 
 tensor_3 = tf.ones((12,24,36))
 tensor_4 = tf.ones((12,24,36,48))
-a = CNN_Layer(filters=3, kernel_size=2, activation=tf.keras.activations.gelu, pool_size=3, strides=3, pooling_layer_name="AveragePooling1D")
+a = CNN_Layer(filters=10, kernel_size=10, activation=tf.keras.activations.gelu, pool_size=10, strides=10, pooling_layer_name="AveragePooling1D")
 print(a(tensor_3))
 print(CNN_Layer(3, 2, tf.keras.activations.gelu, 3, 3, "AveragePooling1D")(tensor_4))
 print(CNN_Layer(3, 2, tf.keras.activations.gelu, 3, 3, "MetaPoolingLayer")(tensor_4))
