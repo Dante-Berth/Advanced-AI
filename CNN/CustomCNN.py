@@ -66,15 +66,16 @@ class CNN_Layer(tf.keras.layers.Layer):
         self.cn_layer = None
         self.pooling_layer= None
 
-    def get_hyperparameter(self):
-        self.hyperparameter = {
-            "hyperparameter_filters": [8, 256, 8],
+    @staticmethod
+    def CNN_layer_hyperparemeters():
+        return {
+            "hyperparameter_filters": [8, 256],
             "hyperparameter_kernel_size": [1, 10, 1],
             "hyperparameter_pool_size": [1, 10, 1],
             "hyperparameter_strides": [1, 10, 1],
-            "hyperparameter_pooling_layer_name": ["MetaPoolingLayer", "AveragePooling2D", "MaxPooling2D","AveragePooling1D","MaxPooling1D"]
+            "hyperparameter_pooling_layer_name": ["MetaPoolingLayer", "AveragePooling2D", "MaxPooling2D",
+                                                  "AveragePooling1D", "MaxPooling1D"]
         }
-
 
     def build(self, input_shape):
         if self.pooling_layer_name == "MetaPoolingLayer":
@@ -117,12 +118,13 @@ class CNN_Layer(tf.keras.layers.Layer):
         x = self.pooling_layer(x)
         x = self.batch_norm_2(x)
         return x
-
+"""
 tensor_3 = tf.ones((12,24,36))
 tensor_4 = tf.ones((12,24,36,48))
 a = CNN_Layer(filters=10, kernel_size=10, activation=tf.keras.activations.gelu, pool_size=10, strides=10, pooling_layer_name="AveragePooling1D")
 print(a(tensor_3))
 print(CNN_Layer(3, 2, tf.keras.activations.gelu, 3, 3, "AveragePooling1D")(tensor_4))
 print(CNN_Layer(3, 2, tf.keras.activations.gelu, 3, 3, "MetaPoolingLayer")(tensor_4))
+"""
 
 
