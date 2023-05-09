@@ -112,15 +112,19 @@ class CustomTransformerEncoderBlock(tfm.nlp.layers.TransformerEncoderBlock):
         self.feature_transform = feature_transform
         self.num_blocks_intermediate = num_blocks_intermediate
         self.num_blocks_output = num_blocks_output
-        self.hyperparameter = {
-            "hyperparameter_attention_layer": ["MultiHeadAttention", "TalkingHeadsAttention", "MultiChannelAttention", "KernelAttention"],
-            "hyperparameter_feedforward_layer": ["GatedFeedforward","None"],
-            "hyperparameter_feature_transform" : ["identity", "sqrt", "erf", "relu", "leaky_relu", "elu", "gelu", "sin"],
-            "hyperparameter_num_blocks_intermediate" : ["1","10","1"],
-            "hyperparameter_num_random_features" : ["8,256,8"],
-            "hyperparameter_num_blocks_output" : ["1,10,1"]
-        }
         super(CustomTransformerEncoderBlock, self).__init__(*args, **kwargs)
+
+    @staticmethod
+    def CustomTransformerEncoderBlock_layer_hyperparemeters():
+        return {
+            "hyperparameter_attention_layer": ["MultiHeadAttention", "TalkingHeadsAttention", "MultiChannelAttention",
+                                               "KernelAttention"],
+            "hyperparameter_feedforward_layer": ["GatedFeedforward", "None"],
+            "hyperparameter_feature_transform": ["identity", "sqrt", "erf", "relu", "leaky_relu", "elu", "gelu", "sin"],
+            "hyperparameter_num_blocks_intermediate": [1, 10, 1],
+            "hyperparameter_num_random_features": [8, 256],
+            "hyperparameter_num_blocks_output": [1, 10, 1]
+        }
 
     def build(self, input_shape):
         """
@@ -222,36 +226,36 @@ class CustomTransformerEncoderBlock(tfm.nlp.layers.TransformerEncoderBlock):
                 The output tensor.
         """
         return tf.keras.layers.LayerNormalization()(super().call(inputs))
-    def get_hyperparameters(self):
-        return self.hyperparameter
 
-# Instantiate the custom TransformerEncoderBlock with the custom layers
-custom_transformer_block = CustomTransformerEncoderBlock(
-    attention_layer="KernelAttention",
-    feedforward_layer="GatedFeedforward",
-    inner_activation="gelu",
-    num_attention_heads=3,
-    key_dim=64,
-    inner_dim=25
-)
-tensor_3 = tf.ones((48, 24, 24))
-tensor_34 = tf.ones((48, 12, 24))
-print(custom_transformer_block(transform_tensors([tensor_3, tensor_34, None])))
+if __name__ =="__main__":
 
-custom_transformer_block = CustomTransformerEncoderBlock(
-    attention_layer="KernelAttention",
-    feedforward_layer="GatedFeedforward",
-    inner_activation="gelu",
-    num_attention_heads=4,
-    key_dim=12,
-    inner_dim=8
-)
+    # Instantiate the custom TransformerEncoderBlock with the custom layers
+    custom_transformer_block = CustomTransformerEncoderBlock(
+        attention_layer="KernelAttention",
+        feedforward_layer="GatedFeedforward",
+        inner_activation="gelu",
+        num_attention_heads=3,
+        key_dim=64,
+        inner_dim=25
+    )
+    tensor_3 = tf.ones((48, 24, 24))
+    tensor_34 = tf.ones((48, 12, 24))
+    print(custom_transformer_block(transform_tensors([tensor_3, tensor_34, None])))
+
+    custom_transformer_block = CustomTransformerEncoderBlock(
+        attention_layer="KernelAttention",
+        feedforward_layer="GatedFeedforward",
+        inner_activation="gelu",
+        num_attention_heads=4,
+        key_dim=12,
+        inner_dim=8
+    )
 
 
 
-tensor_123 = tf.ones((4, 5, 6, 7))
-tensor_456 = tf.ones((4, 5, 6, 7))
+    tensor_123 = tf.ones((4, 5, 6, 7))
+    tensor_456 = tf.ones((4, 5, 6, 7))
 
-print(custom_transformer_block(transform_tensors([tensor_123, tensor_456, None])))
-print("success")
+    print(custom_transformer_block(transform_tensors([tensor_123, tensor_456, None])))
+    print("success")
 
