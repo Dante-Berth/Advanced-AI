@@ -22,5 +22,7 @@ def Optuna_Listelements(name_layer,liste,key,trial):
             return trial.suggest_int(f"{name_layer}+{key}", liste[0], liste[1], liste[2])
     elif type(liste[0])==str:
         return trial.suggest_categorical(f"{name_layer}+{key}", liste)
-def
-    return CustomCNN.CNN_Layer()
+"""
+I should create a function which takes in input a layer, then open the dictionnary of hyperparameters and then instances the object and add the hyperparameters in the trial\
+I am a bit exhausted to continue but it can be easily done. Use the tips CNN_layer(*list) * unpack elements like lists, tuples, or strings
+"""

@@ -2,11 +2,12 @@ Create a personal github **Done**
 Custom my account **Done**
 Custom create a export a program **Done** ( it was the just the .gitingore)
 Custom different Transformers architectures by modifing the self.architecture :
-	- tensorflow by tfm
-	- pytorch **Done**
-	- hugging face
+	- tensorflow by tfm **Done**
+	- pytorch
 Custom CNN layers **Done**
 Custom MLP layers 
 Custom RNN layers
 Create a generic code for auto-optimized layer's hyperparameters thanks to Optuna **In progress**
+Custom Optimizers
+Afther succeeding all these tasks, create a meta architecture
 
