@@ -59,7 +59,7 @@ class CNN_Layer(tf.keras.layers.Layer):
         super(CNN_Layer, self).__init__()
         self.filters = filters
         self.kernel_size = kernel_size
-        self.activation = activation
+        self.activation = getattr(tf.keras.activations, activation)
         self.pool_size = pool_size
         self.strides = strides
         self.pooling_layer_name = pooling_layer_name
@@ -71,6 +71,7 @@ class CNN_Layer(tf.keras.layers.Layer):
         return {
             "hyperparameter_filters": [8, 256],
             "hyperparameter_kernel_size": [1, 10, 1],
+            "hyperparameter_activation": ["gelu", "softsign", "softmax"],
             "hyperparameter_pool_size": [1, 10, 1],
             "hyperparameter_strides": [1, 10, 1],
             "hyperparameter_pooling_layer_name": ["MetaPoolingLayer", "AveragePooling2D", "MaxPooling2D",
