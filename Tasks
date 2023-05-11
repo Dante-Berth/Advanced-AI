@@ -5,7 +5,7 @@ Custom different Transformers architectures by modifing the self.architecture :
 	- tensorflow by tfm **Done**
 	- pytorch
 Custom CNN layers **Done**
-Custom MLP layers 
+Custom MLP layers **In progress**
 Custom RNN layers **Done**
 Create a generic code for auto-optimized layer's hyperparameters thanks to Optuna **In progress**
 Custom Optimizers
