@@ -6,7 +6,7 @@ Custom different Transformers architectures by modifing the self.architecture :
 	- pytorch
 Custom CNN layers **Done**
 Custom MLP layers 
-Custom RNN layers
+Custom RNN layers **Done**
 Create a generic code for auto-optimized layer's hyperparameters thanks to Optuna **In progress**
 Custom Optimizers
 Afther succeeding all these tasks, create a meta architecture
