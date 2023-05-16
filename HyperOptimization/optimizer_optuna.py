@@ -17,15 +17,15 @@ spec.loader.exec_module(CustomCNN)
 def OptunaListElements(name_layer,liste,key,trial):
     if type(liste[0])==int:
         if len(liste)==2:
-            return trial.suggest_int(f"{name_layer}+{key}", liste[0], liste[1], log=True)
+            return trial.suggest_int(f"{name_layer}{key}", liste[0], liste[1], log=True)
         else:
-            return trial.suggest_int(f"{name_layer}+{key}", liste[0], liste[1], liste[2])
+            return trial.suggest_int(f"{name_layer}{key}", liste[0], liste[1], liste[2])
     elif type(liste[0])==str:
-        return trial.suggest_categorical(f"{name_layer}+{key}", liste)
+        return trial.suggest_categorical(f"{name_layer}{key}", liste)
 def loop_initializer(layer,trial,i,j):
     hyperparameters = layer.get_layer_hyperparemeters()
-    name_layer = layer.name
-    prefix = "hyperparameters"
+    name_layer = layer.get_name()
+    prefix = "hyperparameter"
     liste_hyperparameters = [OptunaListElements(f'{name_layer}_deep_{i}_width_{j}',hyperparameters[key],key.split(".")[-1].replace(prefix,""),trial) for key in hyperparameters.keys()]
     return liste_hyperparameters
 
