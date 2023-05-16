@@ -22,11 +22,12 @@ def OptunaListElements(name_layer,liste,key,trial):
             return trial.suggest_int(f"{name_layer}+{key}", liste[0], liste[1], liste[2])
     elif type(liste[0])==str:
         return trial.suggest_categorical(f"{name_layer}+{key}", liste)
-def loop_initializer(a,trial):
-    liste = []
-    for key in a.keys():
-        liste.append(OptunaListElements("CNN",a[key],key.split(".")[-1],trial))
-    return liste
+def loop_initializer(layer,trial,i,j):
+    hyperparameters = layer.get_layer_hyperparemeters()
+    name_layer = layer.name
+    prefix = "hyperparameters"
+    liste_hyperparameters = [OptunaListElements(f'{name_layer}_deep_{i}_width_{j}',hyperparameters[key],key.split(".")[-1].replace(prefix,""),trial) for key in hyperparameters.keys()]
+    return liste_hyperparameters
 
 # Load the MNIST dataset
 (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
@@ -41,8 +42,9 @@ x_test = tf.expand_dims(x_test, -1)
 def objective(trial,x_train=x_train,x_test=x_test,y_train=y_train,y_test=y_test):
     model = tf.keras.Sequential()
 
+
     # Add the convolutional layers
-    model.add(CNN_Layer(*loop_initializer(CNN_Layer.CNN_layer_hyperparemeters(),trial)))
+    model.add(CNN_Layer(*loop_initializer(CNN_Layer,trial,1,1)))
     model.add(tf.keras.layers.Flatten())
     model.add(tf.keras.layers.Dense(10, activation="softmax"))
 

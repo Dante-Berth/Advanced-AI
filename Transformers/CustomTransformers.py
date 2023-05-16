@@ -115,7 +115,10 @@ class CustomTransformerEncoderBlock(tfm.nlp.layers.TransformerEncoderBlock):
         super(CustomTransformerEncoderBlock, self).__init__(*args, **kwargs)
 
     @staticmethod
-    def CustomTransformerEncoderBlock_layer_hyperparemeters():
+    def get_name():
+        return "transformers"
+    @staticmethod
+    def get_layer_hyperparemeters():
         return {
             "hyperparameter_attention_layer": ["MultiHeadAttention", "TalkingHeadsAttention", "MultiChannelAttention",
                                                "KernelAttention"],

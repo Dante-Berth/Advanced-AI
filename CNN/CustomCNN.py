@@ -67,7 +67,10 @@ class CNN_Layer(tf.keras.layers.Layer):
         self.pooling_layer= None
 
     @staticmethod
-    def CNN_layer_hyperparemeters():
+    def get_name():
+        return "cnn"
+    @staticmethod
+    def get_layer_hyperparemeters():
         return {
             "hyperparameter_filters": [8, 256],
             "hyperparameter_kernel_size": [1, 10, 1],

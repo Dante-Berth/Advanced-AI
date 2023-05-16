@@ -47,7 +47,10 @@ class RNN_Layer(tf.keras.layers.Layer):
         self.reduction_layer_output = None
 
     @staticmethod
-    def RNN_layer_hyperparemeters():
+    def get_name():
+        return "rnn"
+    @staticmethod
+    def get_layer_hyperparemeters():
         return {
             "hyperparameter_rnn_layer": ["SimpleRNN", "LSTM", "GRU"],
             "hyperparameter_units": [2, 256],
