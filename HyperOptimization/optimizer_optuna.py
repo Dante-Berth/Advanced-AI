@@ -17,7 +17,7 @@ spec.loader.exec_module(CustomCNN)
 def OptunaListElements(name_layer,liste,key,trial):
     if type(liste[0])==int:
         if len(liste)==2:
-            return trial.suggest_loguniform(f"{name_layer}+{key}", liste[0], liste[1])
+            return trial.suggest_int(f"{name_layer}+{key}", liste[0], liste[1], log=True)
         else:
             return trial.suggest_int(f"{name_layer}+{key}", liste[0], liste[1], liste[2])
     elif type(liste[0])==str:
@@ -43,11 +43,12 @@ def objective(trial,x_train=x_train,x_test=x_test,y_train=y_train,y_test=y_test)
 
     # Add the convolutional layers
     model.add(CNN_Layer(*loop_initializer(CNN_Layer.CNN_layer_hyperparemeters(),trial)))
+    model.add(tf.keras.layers.Flatten())
     model.add(tf.keras.layers.Dense(10, activation="softmax"))
 
     model.compile(
         optimizer="adam",
-        loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+        loss=tf.keras.losses.SparseCategoricalCrossentropy(),
         metrics=["accuracy"]
     )
 
