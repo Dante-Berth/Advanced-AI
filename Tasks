@@ -3,11 +3,12 @@ Custom my account **Done**
 Custom create a export a program **Done** ( it was the just the .gitingore)
 Custom different Transformers architectures by modifing the self.architecture :
 	- tensorflow by tfm **Done**
-	- pytorch
 Custom CNN layers **Done**
-Custom MLP layers **In progress**
+Custom MLP layers **Done**
 Custom RNN layers **Done**
 Create a generic code for auto-optimized layer's hyperparameters thanks to Optuna **In progress**
 Custom Optimizers
-Afther succeeding all these tasks, create a meta architecture
+After succeeding all these tasks, create a meta architecture
+
+Then after succeeding, should launch on our financial data.
 

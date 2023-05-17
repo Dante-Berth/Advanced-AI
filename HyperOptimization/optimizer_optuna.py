@@ -3,15 +3,25 @@ import importlib.util
 import tensorflow as tf
 
 from CNN.CustomCNN import CNN_Layer
+from MLP.CustomPerceptron import Perceptron_Layer
+from RNN.CustomRNN import RNN_Layer
+from Transformers.CustomTransformers import CustomTransformerEncoderBlock
 
-name = "alexw" # name user
-# Specify the absolute path to the CustomCNN.py file
-custom_cnn_path = f'C:/Users/{name}/Documents/Git/AI-WORK/Advanced-Ai/CNN/CustomCNN.py'
 
-# Load the CustomCNN module
-spec = importlib.util.spec_from_file_location('CustomCNN', custom_cnn_path)
-CustomCNN = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(CustomCNN)
+import tensorflow as tf
+
+class TransformTensor(tf.keras.layers.Layer):
+    def __init__(self):
+        super(TransformTensor, self).__init__()
+
+    def call(self, tensor):
+        shape = tf.shape(tensor)
+        batch_size = shape[0]
+        sequence_length = shape[1]
+        embedding_size = tf.reduce_prod(shape[2:])
+        transformed_tensor = tf.reshape(tensor, (batch_size, sequence_length, embedding_size))
+
+        return transformed_tensor
 
 
 def OptunaListElements(name_layer,liste,key,trial):
@@ -43,8 +53,11 @@ def objective(trial,x_train=x_train,x_test=x_test,y_train=y_train,y_test=y_test)
     model = tf.keras.Sequential()
 
 
-    # Add the convolutional layers
+    # Add the convolutional layers and a perceptron
     model.add(CNN_Layer(*loop_initializer(CNN_Layer,trial,1,1)))
+    model.add(TransformTensor())
+    model.add(RNN_Layer(*loop_initializer(RNN_Layer,trial,1,2)))
+    model.add(Perceptron_Layer(*loop_initializer(Perceptron_Layer,trial,1,3)))
     model.add(tf.keras.layers.Flatten())
     model.add(tf.keras.layers.Dense(10, activation="softmax"))
 
@@ -54,13 +67,10 @@ def objective(trial,x_train=x_train,x_test=x_test,y_train=y_train,y_test=y_test)
         metrics=["accuracy"]
     )
 
-    # Train the model
     model.fit(x_train, y_train, epochs=5, validation_data=(x_test, y_test), verbose=1)
 
-    # Evaluate the model
     _, accuracy = model.evaluate(x_test, y_test)
 
-    # Return the negative accuracy (as Optuna tries to minimize the objective)
     return -accuracy
 
 study = optuna.create_study(direction="maximize")

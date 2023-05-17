@@ -1,4 +1,3 @@
-import tensorflow_addons as tfa
 import tensorflow as tf
 """
 MetaActivationLayer généralise le concept de couche d'activation
@@ -30,7 +29,7 @@ class Expcos(tf.keras.layers.Layer):
 
 class Signlog(tf.keras.layers.Layer):
     """
-    Activation function from a paper Dreamer but adding a weight for increasing or reducing the input
+    Activation function from a paper Dreamer but adding a weight for increasing or reducing the input importance
     """
     def __init__(self):
         super(Signlog, self).__init__()
