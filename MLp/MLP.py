@@ -1,34 +1,25 @@
-import scipy.stats
-import pywt
-from pywt import wavedec
-import numpy as np
-import pywt
-import pandas as pd
-#Chargement
+import tensorflow as tf
+class Dense_Layer(tf.keras.layers.Layer):
+    """
+    Dense layer it is exactly like the layer from tensorflow however i added two stasticmethod for hyperoptimization
+    """
+    def __init__(self,units,activation):
+        super(Dense_Layer, self).__init__()
+        self.units = units
+        self.activation = activation
+        self.dense = tf.keras.layers.Dense(self.units,self.activation)
 
-dataset = pd.read_csv(PATH,compression='zip')
-dataset = dataset.drop(dataset.columns[0],axis=1)
-dataset["open_date"] = pd.to_datetime(dataset["open_time"], unit='ms')
-a = 22000
-b = 28000
+    @staticmethod
+    def get_name():
+        return "dense"
 
+    @staticmethod
+    def get_layer_hyperparemeters():
+        return {
+            "hyperparameter_units": [8, 256],
+            "hyperparameter_activation": ["gelu", "softsign", "softmax"]
+        }
+    def call(self,input):
+        return self.dense(input)
 
-def denoising_signal(name,base,level,details):
-    coeffs = wavedec(dataset[name].to_numpy(), base, level=level)
-    c=0
-    for i in range(1,details):
-        a = len(coeffs[-i])
-        coeffs[-i] = np.zeros(a)
-        c = c + a
-    rebuilt_signal = pywt.waverec(coeffs, base)
-
-# Example usage
-a = 22000
-b = 28000
-liste_values = dataset[a:b]["open_price"].to_numpy()
-window_size = 50
-denoised_values = denoise_signal(liste_values, window_size)
-
-# Print the denoised values
-print(denoised_values)
 
