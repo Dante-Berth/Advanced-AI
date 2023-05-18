@@ -1,6 +1,7 @@
 import tensorflow as tf
 import tensorflow_models as tfm
 from official.modeling import tf_utils
+from Activation.CustomActivationLayers import MetaActivationLayer
 from official.nlp.modeling.layers import util
 def transform_tensors(tensors):
     """
@@ -67,7 +68,7 @@ class LearnedPositionalEncoding(tf.keras.layers.Layer):
         return tf.concat([x, self.positional_encoding(x)], axis=-1)
 
 
-class CustomTransformerEncoderBlock(tfm.nlp.layers.TransformerEncoderBlock):
+class TransformerEncoderBlock_layer(tfm.nlp.layers.TransformerEncoderBlock):
     """
     A custom implementation of the Transformer encoder block in TensorFlow NLP library.
 
@@ -85,8 +86,8 @@ class CustomTransformerEncoderBlock(tfm.nlp.layers.TransformerEncoderBlock):
         *args: additional positional arguments to pass to the base TransformerEncoderBlock class.
         **kwargs: additional keyword arguments to pass to the base TransformerEncoderBlock class.
         """
-    def __init__(self, attention_layer: str, feedforward_layer: str, num_random_features=256, feature_transform="exp",
-                 num_blocks_intermediate=2, num_blocks_output=2, *args, **kwargs):
+    def __init__(self, attention_layer: str, feedforward_layer: str, num_random_features=256,
+                 num_blocks_intermediate=2, num_blocks_output=2,num_heads = 8, inner_dim=42,inner_activation="gelu",key_dim = 32):
         """
         Initializes the CustomTransformerEncoderBlock.
 
@@ -109,24 +110,33 @@ class CustomTransformerEncoderBlock(tfm.nlp.layers.TransformerEncoderBlock):
         self.attention_layer = attention_layer
         self.feedforward_layer = feedforward_layer
         self.num_random_features = num_random_features
-        self.feature_transform = feature_transform
         self.num_blocks_intermediate = num_blocks_intermediate
         self.num_blocks_output = num_blocks_output
-        super(CustomTransformerEncoderBlock, self).__init__(*args, **kwargs)
+        self.num_heads = num_heads
+        self.inner_dim = inner_dim
+        self.inner_activation = inner_activation
+        self.key_dim = key_dim
+        self.feature_transform = "exp"
+        super(TransformerEncoderBlock_layer, self).__init__(num_attention_heads=self.num_heads, inner_dim=self.inner_dim,
+             inner_activation=self.inner_activation,key_dim = self.key_dim)
 
     @staticmethod
     def get_name():
-        return "transformers"
+        return "transformers_encoder_block"
     @staticmethod
     def get_layer_hyperparemeters():
         return {
             "hyperparameter_attention_layer": ["MultiHeadAttention", "TalkingHeadsAttention", "MultiChannelAttention",
                                                "KernelAttention"],
             "hyperparameter_feedforward_layer": ["GatedFeedforward", "None"],
-            "hyperparameter_feature_transform": ["identity", "sqrt", "erf", "relu", "leaky_relu", "elu", "gelu", "sin"],
             "hyperparameter_num_blocks_intermediate": [1, 10, 1],
-            "hyperparameter_num_random_features": [8, 256],
-            "hyperparameter_num_blocks_output": [1, 10, 1]
+            "hyperparameter_num_random_features": [8, 80],
+            "hyperparameter_num_blocks_output": [1, 5, 1],
+            "hyperparameter_num_heads": [2, 12, 1],
+            "hyperparameter_inner_dim": [8, 80],
+            "hyperparameter_inner_activation": ["sigmoid","tanh",MetaActivationLayer(),"relu"],
+            "hyperparameter_key_dim": [8, 80]
+
         }
 
     def build(self, input_shape):
@@ -144,7 +154,7 @@ class CustomTransformerEncoderBlock(tfm.nlp.layers.TransformerEncoderBlock):
             Returns:
                 None.
         """
-        super(CustomTransformerEncoderBlock, self).build(input_shape)
+        super(TransformerEncoderBlock_layer, self).build(input_shape)
         if self.attention_layer in ["MultiHeadAttention", "TalkingHeadsAttention", "MultiChannelAttention"]:
             self._attention_layer = getattr(tfm.nlp.layers, self.attention_layer)(
                 num_heads=self._num_heads,
@@ -232,33 +242,30 @@ class CustomTransformerEncoderBlock(tfm.nlp.layers.TransformerEncoderBlock):
 
 if __name__ =="__main__":
 
-    # Instantiate the custom TransformerEncoderBlock with the custom layers
-    custom_transformer_block = CustomTransformerEncoderBlock(
-        attention_layer="KernelAttention",
-        feedforward_layer="GatedFeedforward",
-        inner_activation="gelu",
-        num_attention_heads=3,
-        key_dim=64,
-        inner_dim=25
-    )
-    tensor_3 = tf.ones((48, 24, 24))
-    tensor_34 = tf.ones((48, 12, 24))
-    print(custom_transformer_block(transform_tensors([tensor_3, tensor_34, None])))
 
-    custom_transformer_block = CustomTransformerEncoderBlock(
+
+    custom_transformer_block = TransformerEncoderBlock_layer(
         attention_layer="KernelAttention",
         feedforward_layer="GatedFeedforward",
-        inner_activation="gelu",
-        num_attention_heads=4,
+        inner_activation=MetaActivationLayer(),
+        num_heads=4,
         key_dim=12,
         inner_dim=8
     )
 
 
-
     tensor_123 = tf.ones((4, 5, 6, 7))
     tensor_456 = tf.ones((4, 5, 6, 7))
 
-    print(custom_transformer_block(transform_tensors([tensor_123, tensor_456, None])))
-    print("success")
+    print("second layer")
+    print(custom_transformer_block(transform_tensors([tensor_123, None, None])))
 
+    # Instantiate the custom TransformerEncoderBlock with the custom layers
+    custom_transformer_block = TransformerEncoderBlock_layer(
+        attention_layer="KernelAttention",
+        feedforward_layer="GatedFeedforward"
+    )
+    tensor_3 = tf.ones((48, 23, 24))
+    tensor_34 = tf.ones((48, 12, 38))
+    print(custom_transformer_block(transform_tensors([tensor_3, tensor_34, None])))
+    print("success")

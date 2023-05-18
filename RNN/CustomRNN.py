@@ -59,7 +59,7 @@ class RNN_Layer(tf.keras.layers.Layer):
 
     def build(self, input_shape):
 
-        self.reduction_layer_input = tf.keras.layers.Conv1D(filters=input_shape[-1] // self.reduction_factor_input,
+        self.reduction_layer_input = tf.keras.layers.Conv1D(filters=tf.maximum(1,input_shape[-1] // self.reduction_factor_input),
                                                             kernel_size=1)
 
 
@@ -68,7 +68,7 @@ class RNN_Layer(tf.keras.layers.Layer):
                                             dropout=self.dropout,
                                             recurrent_dropout=self.recurrent_dropout
                                             )
-        self.reduction_layer_output = tf.keras.layers.Conv1D(filters=self.units // self.reduction_factor_output,
+        self.reduction_layer_output = tf.keras.layers.Conv1D(filters=tf.maximum(1,self.units // self.reduction_factor_output),
                                                              kernel_size=1)
 
     def call(self, inputs):
@@ -82,4 +82,4 @@ if __name__ == "__main__":
     tensor_4 = tf.ones((12, 24, 36, 48))
     print(tf.keras.layers.LSTM(22, return_sequences=True)(tensor_3))
     print(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(12, return_sequences=True))(tensor_3))
-    print(RNN_Layer("LSTM",12,0.3,0.3,2,2,True)(tensor_3))
+    print(RNN_Layer("LSTM",12,0.3,0.3,2,2)(tensor_3))

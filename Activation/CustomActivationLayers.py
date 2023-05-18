@@ -73,7 +73,9 @@ class MetaActivationLayer(tf.keras.layers.Layer):
         for weight, activation in zip(tf.unstack(self.weights_list, axis=0), self.activation_list):
             weighted_activations += weight * activation(inputs)
         return weighted_activations
-
+if __name__=="__main__":
+    tensor_123 = tf.ones((4, 5, 6, 7))
+    print(MetaActivationLayer()(tensor_123))
 
 
 

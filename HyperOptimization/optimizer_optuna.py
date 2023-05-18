@@ -54,7 +54,7 @@ def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test)
     x = Reshape_Layer()(x)
 
 
-    y = RNN_Layer(*loop_initializer(RNN_Layer, trial, 1, 2))(x)
+    y = TransformerEncoderBlock_layer(*loop_initializer(TransformerEncoderBlock_layer, trial, 1, 2))([x,x, None])
 
     y = Perceptron_Layer(*loop_initializer(Perceptron_Layer, trial, 1, 3))(y)
 
