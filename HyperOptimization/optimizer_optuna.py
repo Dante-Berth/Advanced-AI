@@ -47,16 +47,16 @@ class Reshape_Layer(tf.keras.layers.Layer):
         else:
             return inputs
 def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test):
-    input_layer = tf.keras.layers.Input(shape=(28, 28, 1))
+    input_layer = tf.keras.layers.Input(shape=(450, 30, 10))
 
     x = CNN_Layer(*loop_initializer(CNN_Layer, trial, 1, 1))(input_layer)
 
     x = Reshape_Layer()(x)
 
 
-    y = TransformerEncoderBlock_layer(*loop_initializer(TransformerEncoderBlock_layer, trial, 1, 2))([x,x, None])
-
-    y = Perceptron_Layer(*loop_initializer(Perceptron_Layer, trial, 1, 3))(y)
+    y = TransformerEncoderBlock_layer(*loop_initializer(TransformerEncoderBlock_layer, trial, 1, 2))([x,None, None])
+    y =  RNN_Layer(*loop_initializer(RNN_Layer,trial,1,3))(y)
+    y = Perceptron_Layer(*loop_initializer(Perceptron_Layer, trial, 1, 4))(y)
 
     # Flatten the output
     y = tf.keras.layers.Flatten()(y)

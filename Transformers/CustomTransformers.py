@@ -87,7 +87,7 @@ class TransformerEncoderBlock_layer(tfm.nlp.layers.TransformerEncoderBlock):
         **kwargs: additional keyword arguments to pass to the base TransformerEncoderBlock class.
         """
     def __init__(self, attention_layer: str, feedforward_layer: str, num_random_features=256,
-                 num_blocks_intermediate=2, num_blocks_output=2,num_heads = 8, inner_dim=42,inner_activation="gelu",key_dim = 32):
+                 num_blocks_intermediate=2,num_heads = 8, inner_dim=42,inner_activation="gelu",key_dim = 32):
         """
         Initializes the CustomTransformerEncoderBlock.
 
@@ -111,7 +111,7 @@ class TransformerEncoderBlock_layer(tfm.nlp.layers.TransformerEncoderBlock):
         self.feedforward_layer = feedforward_layer
         self.num_random_features = num_random_features
         self.num_blocks_intermediate = num_blocks_intermediate
-        self.num_blocks_output = num_blocks_output
+        self.num_blocks_output = 2
         self.num_heads = num_heads
         self.inner_dim = inner_dim
         self.inner_activation = inner_activation
@@ -126,12 +126,11 @@ class TransformerEncoderBlock_layer(tfm.nlp.layers.TransformerEncoderBlock):
     @staticmethod
     def get_layer_hyperparemeters():
         return {
-            "hyperparameter_attention_layer": ["MultiHeadAttention", "TalkingHeadsAttention", "MultiChannelAttention",
+            "hyperparameter_attention_layer": ["MultiHeadAttention", "TalkingHeadsAttention",
                                                "KernelAttention"],
             "hyperparameter_feedforward_layer": ["GatedFeedforward", "None"],
             "hyperparameter_num_blocks_intermediate": [1, 10, 1],
             "hyperparameter_num_random_features": [8, 80],
-            "hyperparameter_num_blocks_output": [1, 5, 1],
             "hyperparameter_num_heads": [2, 12, 1],
             "hyperparameter_inner_dim": [8, 80],
             "hyperparameter_inner_activation": ["sigmoid","tanh",MetaActivationLayer(),"relu"],
@@ -155,7 +154,7 @@ class TransformerEncoderBlock_layer(tfm.nlp.layers.TransformerEncoderBlock):
                 None.
         """
         super(TransformerEncoderBlock_layer, self).build(input_shape)
-        if self.attention_layer in ["MultiHeadAttention", "TalkingHeadsAttention", "MultiChannelAttention"]:
+        if self.attention_layer in ["MultiHeadAttention", "TalkingHeadsAttention"]:
             self._attention_layer = getattr(tfm.nlp.layers, self.attention_layer)(
                 num_heads=self._num_heads,
                 key_dim=self._key_dim,
@@ -245,7 +244,7 @@ if __name__ =="__main__":
 
 
     custom_transformer_block = TransformerEncoderBlock_layer(
-        attention_layer="KernelAttention",
+        attention_layer="MultiHeadAttention",
         feedforward_layer="GatedFeedforward",
         inner_activation=MetaActivationLayer(),
         num_heads=4,
