@@ -53,7 +53,7 @@ def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test)
 
     y = R_RNN_Layer(*loop_initializer(R_RNN_Layer, trial, 1, 2))(x)
 
-    y = R_TransformerEncoderBlock_layer(*loop_initializer(R_TransformerEncoderBlock_layer, trial, 1, 3))([x,y, None])
+    y = R_TransformerEncoderBlock_layer(*loop_initializer(R_TransformerEncoderBlock_layer, trial, 1, 3))([x,y])
     y = R_RNN_Layer(*loop_initializer(R_RNN_Layer,trial,1,4))(y)
     y = Perceptron_Layer(*loop_initializer(Perceptron_Layer, trial, 1, 5))(y)
 
