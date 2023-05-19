@@ -3,24 +3,23 @@ import tensorflow_models as tfm
 from official.modeling import tf_utils
 from Activation.CustomActivationLayers import MetaActivationLayer
 from official.nlp.modeling.layers import util
-def transform_tensors(tensors):
-    """
-    list of tensors, and you want to transform them into tensors of shape
-    :param tensors: tf.Tensor
-    :return: list of tensors of shape (batch_size, sequence_length, embedding_size)
-    """
-    transformed_tensors = []
-    for tensor in tensors:
-        if tensor is None:
-            transformed_tensors.append(None)
+
+
+class Reshape_Layer_3D(tf.keras.layers.Layer):
+    def __init__(self):
+        super(Reshape_Layer_3D, self).__init__()
+        self.reshape = None
+
+    def build(self, input_shape):
+        if len(input_shape) > 3:
+            self.reshape = tf.keras.layers.Reshape((input_shape[1], tf.reduce_prod(input_shape[2:]).numpy()[()]))
+
+    def call(self, inputs, *args, **kwargs):
+        if self.reshape:
+            return self.reshape(inputs)
         else:
-            shape = tf.shape(tensor)
-            batch_size = shape[0]
-            sequence_length = shape[1]
-            embedding_size = tf.reduce_prod(shape[2:])
-            transformed_tensor = tf.reshape(tensor, (batch_size, sequence_length, embedding_size))
-            transformed_tensors.append(transformed_tensor)
-    return transformed_tensors
+            return inputs
+
 
 class LearnedPositionalEncoding(tf.keras.layers.Layer):
     """
@@ -39,6 +38,7 @@ class LearnedPositionalEncoding(tf.keras.layers.Layer):
        Returns:
            The input sequence with learned positional encoding added.
        """
+
     def __init__(self):
         super(LearnedPositionalEncoding, self).__init__()
 
@@ -53,7 +53,6 @@ class LearnedPositionalEncoding(tf.keras.layers.Layer):
             None
         """
         self.positional_encoding = tf.keras.layers.Dense(units=input_shape[-1])
-
 
     def call(self, x):
         """
@@ -86,8 +85,9 @@ class TransformerEncoderBlock_layer(tfm.nlp.layers.TransformerEncoderBlock):
         *args: additional positional arguments to pass to the base TransformerEncoderBlock class.
         **kwargs: additional keyword arguments to pass to the base TransformerEncoderBlock class.
         """
+
     def __init__(self, attention_layer: str, feedforward_layer: str, num_random_features=256,
-                 num_blocks_intermediate=2,num_heads = 8, inner_dim=42,inner_activation="gelu",key_dim = 32):
+                 num_blocks_intermediate=2, num_heads=8, inner_dim=42, inner_activation="gelu", key_dim=32):
         """
         Initializes the CustomTransformerEncoderBlock.
 
@@ -117,12 +117,15 @@ class TransformerEncoderBlock_layer(tfm.nlp.layers.TransformerEncoderBlock):
         self.inner_activation = inner_activation
         self.key_dim = key_dim
         self.feature_transform = "exp"
-        super(TransformerEncoderBlock_layer, self).__init__(num_attention_heads=self.num_heads, inner_dim=self.inner_dim,
-             inner_activation=self.inner_activation,key_dim = self.key_dim)
+        super(TransformerEncoderBlock_layer, self).__init__(num_attention_heads=self.num_heads,
+                                                            inner_dim=self.inner_dim,
+                                                            inner_activation=self.inner_activation,
+                                                            key_dim=self.key_dim)
 
     @staticmethod
     def get_name():
         return "transformers_encoder_block"
+
     @staticmethod
     def get_layer_hyperparemeters():
         return {
@@ -133,7 +136,7 @@ class TransformerEncoderBlock_layer(tfm.nlp.layers.TransformerEncoderBlock):
             "hyperparameter_num_random_features": [8, 80],
             "hyperparameter_num_heads": [2, 12, 1],
             "hyperparameter_inner_dim": [8, 80],
-            "hyperparameter_inner_activation": ["sigmoid","tanh",MetaActivationLayer(),"relu"],
+            "hyperparameter_inner_activation": ["sigmoid", "tanh", MetaActivationLayer(), "relu"],
             "hyperparameter_key_dim": [8, 80]
 
         }
@@ -239,10 +242,61 @@ class TransformerEncoderBlock_layer(tfm.nlp.layers.TransformerEncoderBlock):
         """
         return tf.keras.layers.LayerNormalization()(super().call(inputs))
 
-if __name__ =="__main__":
+
+class R_TransformerEncoderBlock_layer(tf.keras.layers.Layer):
+    def __init__(self, attention_layer, feedforward_layer, num_random_features,
+                 num_blocks_intermediate, num_heads, inner_dim, inner_activation, key_dim):
+        super(R_TransformerEncoderBlock_layer, self).__init__()
+        self.transformer = TransformerEncoderBlock_layer(attention_layer, feedforward_layer, num_random_features,
+                                                         num_blocks_intermediate, num_heads, inner_dim,
+                                                         inner_activation, key_dim)
+
+    @staticmethod
+    def get_name():
+        return "transformers_encoder_block"
+
+    @staticmethod
+    def get_layer_hyperparemeters():
+        return {
+            "hyperparameter_attention_layer": ["MultiHeadAttention", "TalkingHeadsAttention",
+                                               "KernelAttention"],
+            "hyperparameter_feedforward_layer": ["GatedFeedforward", "None"],
+            "hyperparameter_num_blocks_intermediate": [1, 10, 1],
+            "hyperparameter_num_random_features": [8, 80],
+            "hyperparameter_num_heads": [2, 12, 1],
+            "hyperparameter_inner_dim": [8, 80],
+            "hyperparameter_inner_activation": ["sigmoid", "tanh", MetaActivationLayer(), "relu"],
+            "hyperparameter_key_dim": [8, 80]
+
+        }
+
+    def build(self, input_shape):
+
+        input_tensor_shape = input_shape[0]
+        if input_shape[1]:
+            input_tensor_shape_minor = input_shape[1]
+            self.reshape_layer_minor = Reshape_Layer_3D()
+            self.reshape_layer_minor.build(input_tensor_shape_minor)
+
+        self.reshape_layer_main = Reshape_Layer_3D()
+        self.reshape_layer_main.build(input_tensor_shape)
+        reshaped_shape = self.reshape_layer_main.compute_output_shape(input_tensor_shape)
+        self.transformer.build(reshaped_shape)
 
 
+    def call(self, inputs):
 
+        if isinstance(inputs[1], tf.Tensor):
+            x = self.reshape_layer_main.call(inputs[0])
+            y = self.reshape_layer_minor.call(inputs[1])
+            output = self.transformer.call([x, y, None])
+        else:
+            x = self.reshape_layer_main.call(inputs[0])
+            output = self.transformer.call([x, x, None])
+        return output
+
+
+if __name__ == "__main__":
     custom_transformer_block = TransformerEncoderBlock_layer(
         attention_layer="MultiHeadAttention",
         feedforward_layer="GatedFeedforward",
@@ -252,9 +306,12 @@ if __name__ =="__main__":
         inner_dim=8
     )
 
-
     tensor_123 = tf.ones((4, 5, 6, 7))
     tensor_456 = tf.ones((4, 5, 6, 7))
+    print(R_TransformerEncoderBlock_layer(attention_layer="MultiHeadAttention",
+        feedforward_layer="GatedFeedforward", num_random_features=256,
+                 num_blocks_intermediate=2, num_heads=8, inner_dim=42, inner_activation="gelu", key_dim=32)([tensor_123, None]))
+    exit()
 
     print("second layer")
     print(custom_transformer_block(transform_tensors([tensor_123, None, None])))

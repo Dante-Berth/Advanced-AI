@@ -1,9 +1,9 @@
 import tensorflow as tf
 
 
-class Reshape_Layer(tf.keras.layers.Layer):
+class Reshape_Layer_3D(tf.keras.layers.Layer):
     def __init__(self):
-        super(Reshape_Layer, self).__init__()
+        super(Reshape_Layer_3D, self).__init__()
         self.reshape = None
 
     def build(self, input_shape):
@@ -80,7 +80,7 @@ class R_RNN_Layer(tf.keras.layers.Layer):
     def __init__(self, rnn_layer, units, dropout, recurrent_dropout,
                  reduction_factor_input, reduction_factor_output):
         super(R_RNN_Layer, self).__init__()
-        self.reshape_layer = Reshape_Layer()
+        self.reshape_layer = Reshape_Layer_3D()
         self.rnn_layer = RNN_Layer(rnn_layer, units, dropout, recurrent_dropout,
                                         reduction_factor_input, reduction_factor_output)
 
