@@ -9,8 +9,8 @@ Custom RNN layers **Done**
 
 Thesis with Airbus on Geometric data ( GNN <3 asked to Guillaume for more details)
 Create a generic code for auto-optimized layer's hyperparameters thanks to Optuna **In progress**
-    - Should test for Transformers
-    - Adding my customlayers
+    - Should test for Transformers **Done**
+    - Adding my customlayers **Done**
     - Final architecture
 Custom Optimizers
 After succeeding all these tasks, create a meta architecture

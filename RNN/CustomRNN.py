@@ -1,7 +1,20 @@
 import tensorflow as tf
 
 
+class Reshape_Layer(tf.keras.layers.Layer):
+    def __init__(self):
+        super(Reshape_Layer, self).__init__()
+        self.reshape = None
 
+    def build(self, input_shape):
+        if len(input_shape)>3:
+            self.reshape = tf.keras.layers.Reshape((input_shape[1], tf.reduce_prod(input_shape[2:]).numpy()[()]))
+
+    def call(self, inputs, *args, **kwargs):
+        if self.reshape:
+            return self.reshape(inputs)
+        else:
+            return inputs
 class RNN_Layer(tf.keras.layers.Layer):
     """
     RNN_layer generalizes the concept of RNN,  can handle input of different size either 3 or either 4
@@ -43,19 +56,6 @@ class RNN_Layer(tf.keras.layers.Layer):
         transformed_tensor = tf.reshape(tensor, (batch_size, sequence_length, embedding_size))
 
         return transformed_tensor
-    @staticmethod
-    def get_name():
-        return "rnn"
-    @staticmethod
-    def get_layer_hyperparemeters():
-        return {
-            "hyperparameter_rnn_layer": ["SimpleRNN", "LSTM", "GRU"],
-            "hyperparameter_units": [2, 256],
-            "hyperparameter_dropout": [0, 50, 10],
-            "hyperparameter_recurrent_dropout": [0, 50, 10],
-            "hyperparameter_reduction_factor_input": [1, 32],
-            "hyperparameter_reduction_factor_output": [1, 16]
-        }
 
     def build(self, input_shape):
 
@@ -76,10 +76,63 @@ class RNN_Layer(tf.keras.layers.Layer):
         x = self.rnn_layer(x)
         return self.reduction_layer_output(x)
 
+class R_RNN_Layer(tf.keras.layers.Layer):
+    def __init__(self, rnn_layer, units, dropout, recurrent_dropout,
+                 reduction_factor_input, reduction_factor_output):
+        super(R_RNN_Layer, self).__init__()
+        self.reshape_layer = Reshape_Layer()
+        self.rnn_layer = RNN_Layer(rnn_layer, units, dropout, recurrent_dropout,
+                                        reduction_factor_input, reduction_factor_output)
+
+    @staticmethod
+    def get_name():
+        return "rnn"
+
+    @staticmethod
+    def get_layer_hyperparemeters():
+        return {
+            "hyperparameter_rnn_layer": ["SimpleRNN", "LSTM", "GRU"],
+            "hyperparameter_units": [2, 256],
+            "hyperparameter_dropout": [0, 50, 10],
+            "hyperparameter_recurrent_dropout": [0, 50, 10],
+            "hyperparameter_reduction_factor_input": [1, 32],
+            "hyperparameter_reduction_factor_output": [1, 16]
+        }
+    def build(self, input_shape):
+        self.reshape_layer.build(input_shape)
+        reshaped_shape = self.reshape_layer.compute_output_shape(input_shape)
+        self.rnn_layer.build(reshaped_shape)
+
+    def call(self, inputs):
+        x = self.reshape_layer.call(inputs)
+        x = self.rnn_layer.call(x)
+        return x
+
+
 
 if __name__ == "__main__":
     tensor_3 = tf.ones((12, 24, 36))
     tensor_4 = tf.ones((12, 24, 36, 48))
-    print(tf.keras.layers.LSTM(22, return_sequences=True)(tensor_3))
-    print(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(12, return_sequences=True))(tensor_3))
-    print(RNN_Layer("LSTM",12,0.3,0.3,2,2)(tensor_3))
+
+
+    # Create an instance of ReshapeAndRNNLayer
+    reshape_rnn_layer = R_RNN_Layer(rnn_layer="LSTM", units=12, dropout=0.3, recurrent_dropout=0.3,
+                                           reduction_factor_input=2, reduction_factor_output=2)
+
+    # Pass the input tensor through the layer
+    output = reshape_rnn_layer(tensor_4)
+
+
+    # Print the output shape
+    print(output.shape)
+
+    # Create an instance of ReshapeAndRNNLayer
+    reshape_rnn_layer = R_RNN_Layer(rnn_layer="LSTM", units=12, dropout=0.3, recurrent_dropout=0.3,
+                                           reduction_factor_input=2, reduction_factor_output=2)
+
+    # Pass the input tensor through the layer
+    output = reshape_rnn_layer(tensor_3)
+
+    # Print the output shape
+    print(output.shape)
+

@@ -3,7 +3,7 @@ import importlib.util
 import tensorflow as tf
 from CNN.CustomCNN import CNN_Layer
 from MLP.CustomPerceptron import Perceptron_Layer
-from RNN.CustomRNN import RNN_Layer
+from RNN.CustomRNN import RNN_Layer, R_RNN_Layer
 from Transformers.CustomTransformers import TransformerEncoderBlock_layer
 
 import tensorflow as tf
@@ -52,11 +52,11 @@ def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test)
     x = CNN_Layer(*loop_initializer(CNN_Layer, trial, 1, 1))(input_layer)
 
     x = Reshape_Layer()(x)
+    y = R_RNN_Layer(*loop_initializer(R_RNN_Layer, trial, 1, 2))(x)
 
-
-    y = TransformerEncoderBlock_layer(*loop_initializer(TransformerEncoderBlock_layer, trial, 1, 2))([x,None, None])
-    y =  RNN_Layer(*loop_initializer(RNN_Layer,trial,1,3))(y)
-    y = Perceptron_Layer(*loop_initializer(Perceptron_Layer, trial, 1, 4))(y)
+    y = TransformerEncoderBlock_layer(*loop_initializer(TransformerEncoderBlock_layer, trial, 1, 3))([x,y, None])
+    y =  R_RNN_Layer(*loop_initializer(R_RNN_Layer,trial,1,4))(y)
+    y = Perceptron_Layer(*loop_initializer(Perceptron_Layer, trial, 1, 5))(y)
 
     # Flatten the output
     y = tf.keras.layers.Flatten()(y)
