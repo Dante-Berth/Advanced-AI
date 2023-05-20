@@ -6,6 +6,9 @@ from official.nlp.modeling.layers import util
 
 
 class Reshape_Layer_3D(tf.keras.layers.Layer):
+    """
+    Reshape layer 3D is used to reshape any layer with length superior to three
+    """
     def __init__(self):
         super(Reshape_Layer_3D, self).__init__()
         self.reshape = None
@@ -244,6 +247,9 @@ class TransformerEncoderBlock_layer(tfm.nlp.layers.TransformerEncoderBlock):
 
 
 class R_TransformerEncoderBlock_layer(tf.keras.layers.Layer):
+    """
+    R_TransformerEncoderBlock_layer is TransformerEncoderBlock_layer where can handle 1D lenght vector (takes [tf.Tensor] or [tf.Tensor,tf.Tensor]
+    """
     def __init__(self, attention_layer, feedforward_layer, num_random_features,
                  num_blocks_intermediate, num_heads, inner_dim, inner_activation, key_dim):
         super(R_TransformerEncoderBlock_layer, self).__init__()
