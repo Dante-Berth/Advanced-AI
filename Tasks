@@ -12,7 +12,7 @@ Create a generic code for auto-optimized layer's hyperparameters thanks to Optun
     - Should test for Transformers **Done**
     - Adding my customlayers **Done**
     - Final architecture
-    - Creating a layer for CNN,MLP & RNN for handling a list of two tensors of 3D and 4D
+    - Creating a layer for CNN,MLP & RNN for handling a list of two tensors of 3D and 4D **Almost Done ( layer was added should be tested on different structures)**
 Custom Optimizers
 After succeeding all these tasks, create a meta architecture
 
