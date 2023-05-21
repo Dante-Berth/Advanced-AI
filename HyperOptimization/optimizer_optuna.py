@@ -3,7 +3,7 @@ import importlib.util
 import tensorflow as tf
 from CNN.CustomCNN import CNN_Layer
 from MLP.CustomPerceptron import Perceptron_Layer
-from RNN.CustomRNN import RNN_Layer, R_RNN_Layer
+from RNN.CustomRNN import RNN_Layer, R_RNN_Layer, Reshape_Layer_3D
 from Transformers.CustomTransformers import TransformerEncoderBlock_layer, R_TransformerEncoderBlock_layer
 
 import tensorflow as tf
@@ -47,25 +47,29 @@ class Reshape_Layer(tf.keras.layers.Layer):
         else:
             return inputs
 def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test):
-    input_layer = tf.keras.layers.Input(shape=(450, 30, 10))
+    input_layer = tf.keras.layers.Input(shape=(28, 28, 1))
 
     x = CNN_Layer(*loop_initializer(CNN_Layer, trial, 1, 1))(input_layer)
 
-    y = R_RNN_Layer(*loop_initializer(R_RNN_Layer, trial, 1, 2))(x)
+    y = CNN_Layer(*loop_initializer(CNN_Layer, trial, 1, 1))(x)
+
+
+    x = R_RNN_Layer(*loop_initializer(R_RNN_Layer, trial, 1, 2))(x)
 
     y = R_TransformerEncoderBlock_layer(*loop_initializer(R_TransformerEncoderBlock_layer, trial, 1, 3))([x,y])
-    y = R_RNN_Layer(*loop_initializer(R_RNN_Layer,trial,1,4))(y)
-    y = Perceptron_Layer(*loop_initializer(Perceptron_Layer, trial, 1, 5))(y)
+
+    y = R_RNN_Layer(*loop_initializer(R_RNN_Layer,trial,1,4))([y,x])
+
+    y = Perceptron_Layer(*loop_initializer(Perceptron_Layer, trial, 1, 5))([y,x])
 
     # Flatten the output
-    y = tf.keras.layers.Flatten()(y)
+    y = tf.keras.layers.Flatten()(x)
 
     # Define the output layer
     output = tf.keras.layers.Dense(10, activation="softmax")(y)
 
     model = tf.keras.models.Model(inputs=input_layer, outputs=output)
-    print(model.summary())
-    exit()
+
     model.compile(
         optimizer="adam",
         loss=tf.keras.losses.SparseCategoricalCrossentropy(),

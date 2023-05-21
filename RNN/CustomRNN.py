@@ -1,5 +1,5 @@
 import tensorflow as tf
-
+from Fromtwotensorsintoonetensor import R_ListTensor
 
 class Reshape_Layer_3D(tf.keras.layers.Layer):
     def __init__(self):
@@ -35,8 +35,8 @@ class RNN_Layer(tf.keras.layers.Layer):
         super(RNN_Layer, self).__init__()
         self.rnn_layer = getattr(tf.keras.layers, rnn_layer)
         self.units = units
-        self.dropout = dropout//10
-        self.recurrent_dropout = recurrent_dropout//10
+        self.dropout = dropout//10*0.1
+        self.recurrent_dropout = recurrent_dropout//10*0.1
         self.reduction_factor_input = reduction_factor_input
         self.reduction_factor_output = reduction_factor_output
         self.reduction_layer_input = None
@@ -99,11 +99,17 @@ class R_RNN_Layer(tf.keras.layers.Layer):
             "hyperparameter_reduction_factor_output": [1, 16]
         }
     def build(self, input_shape):
+        if isinstance(input_shape,list):
+            self.R_ListTensor = R_ListTensor()
+            input_shape = self.R_ListTensor.get_output_shape(input_shape)
         self.reshape_layer.build(input_shape)
         reshaped_shape = self.reshape_layer.compute_output_shape(input_shape)
         self.rnn_layer.build(reshaped_shape)
 
     def call(self, inputs):
+        if isinstance(inputs,list):
+            inputs = self.R_ListTensor.call(inputs)
+
         x = self.reshape_layer.call(inputs)
         x = self.rnn_layer.call(x)
         return x
@@ -120,7 +126,8 @@ if __name__ == "__main__":
                                            reduction_factor_input=2, reduction_factor_output=2)
 
     # Pass the input tensor through the layer
-    output = reshape_rnn_layer(tensor_4)
+    tensor_5 = [tensor_4, tensor_3]
+    output = reshape_rnn_layer(tensor_5)
 
 
     # Print the output shape

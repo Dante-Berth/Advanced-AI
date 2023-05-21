@@ -1,4 +1,5 @@
 import tensorflow as tf
+from Fromtwotensorsintoonetensor import R_ListTensor
 
 class MetaPoolingLayer(tf.keras.layers.Layer):
     """
@@ -82,6 +83,10 @@ class CNN_Layer(tf.keras.layers.Layer):
         }
 
     def build(self, input_shape):
+        if isinstance(input_shape,list):
+            self.R_ListTensor = R_ListTensor()
+            input_shape = self.R_ListTensor.get_output_shape(input_shape)
+
         if self.pooling_layer_name == "MetaPoolingLayer":
             self.pooling_layer = MetaPoolingLayer(self.pool_size, self.strides)
         else:
@@ -116,6 +121,8 @@ class CNN_Layer(tf.keras.layers.Layer):
         self.batch_norm_2 = tf.keras.layers.BatchNormalization()
 
     def call(self, input, **kwargs):
+        if isinstance(input,list):
+            input = self.R_ListTensor.call(input)
         x = self.cn_layer(input)
         x = self.batch_norm_1(x)
         x = self.activation(x)
@@ -129,6 +136,8 @@ if __name__=="__main__":
     print(a(tensor_3))
     print(CNN_Layer(3, 2, "gelu", 3, 3, "AveragePooling1D")(tensor_4))
     print(CNN_Layer(3, 2, "gelu", 3, 3, "MetaPoolingLayer")(tensor_4))
+    print(CNN_Layer(3, 2, "gelu", 3, 3, "MetaPoolingLayer")([tensor_4,tensor_3]))
+    print(CNN_Layer(3, 2, "gelu", 3, 3, "MetaPoolingLayer")([tensor_3, tensor_3]))
 
 
 
