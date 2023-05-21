@@ -57,6 +57,23 @@ class CNN_Layer(tf.keras.layers.Layer):
     """
 
     def __init__(self, filters: int, kernel_size: int, activation: tf.keras.activations, pool_size: int, strides: int, pooling_layer_name: str):
+        """
+        Initializes a CNN_Layer object.
+
+        Args:
+            filters (int): The number of filters in the convolutional layer.
+            kernel_size (int): The size of the convolutional kernel.
+            activation (tf.keras.activations): The activation function to use.
+            pool_size (int): The size of the pooling window.
+            strides (int): The stride size for the pooling operation.
+            pooling_layer_name (str): The name of the pooling layer.
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
         super(CNN_Layer, self).__init__()
         self.filters = filters
         self.kernel_size = kernel_size
