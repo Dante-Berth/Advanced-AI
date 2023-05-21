@@ -1,9 +1,22 @@
 import tensorflow as tf
-class TensorListTensor(tf.keras.layers.Layer):
+class R_ListTensor(tf.keras.layers.Layer):
     def __init__(self):
-        super(TensorListTensor, self).__init__()
+        super(R_ListTensor, self).__init__()
         self.instance_padding = True
 
+    @staticmethod
+    def get_output_shape(input_shape):
+        if isinstance(input_shape[1],tf.TensorShape):
+            shape_1 = input_shape[0].as_list()
+            shape_2 = input_shape[1].as_list()
+            if len(shape_1) > len(shape_2):
+                shape_2.extend([1] * (len(shape_1) - len(shape_2)))
+            elif len(shape_1) < len(shape_2):
+                shape_1.extend([1] * (len(shape_2) - len(shape_1)))
+            combined_shape = [max(dim1, dim2) for dim1, dim2 in zip(shape_1, shape_2)]
+            return tf.TensorShape(combined_shape)
+        else:
+            return input_shape
     def call(self, x):
         if isinstance(x[1], tf.Tensor):
             x[0], x[1] = self.creator_pad(x[0],x[1])
@@ -38,9 +51,8 @@ class TensorListTensor(tf.keras.layers.Layer):
 
         padding_1 = []
         padding_2 = []
-        print(shape_1,shape_2)
+
         for i, j in zip(shape_1, shape_2):
-            print(i,j)
             padding_1.append([0, max(0,j - i)])
             padding_2.append([0, max(0,i - j)])
 
@@ -52,21 +64,9 @@ class TensorListTensor(tf.keras.layers.Layer):
 
 
 
-# Input vector with size (4, 5, 6)
-vector_1 = tf.ones(shape=(12, 5, 6))
-vector_2 = tf.ones(shape=(10,8,14))
-shape_1 = vector_1.shape
-shape_2 = vector_2.shape
+if __name__=="__main__":
 
-pad_first = shape_1[0] - shape_2[0]
-pad_second = shape_1[1] - shape_2[1]
-pad_three = shape_1[2] - shape_2[2]
-# Pad the input vector
-padded_vector = tf.pad(vector_1, [[0, max(0,-pad_first)], [0, max(0,-pad_second)], [0, max(0,-pad_three)]])
-padded_vector_2 = tf.pad(vector_2, [[0, max(0,pad_first)], [0, max(0,pad_second)], [0, max(0,pad_three)]])
+    vector_1 = tf.ones(shape=(12, 5, 6,2))
+    vector_2 = tf.ones(shape=(10,8,14))
+    print(R_ListTensor()([vector_1, vector_2]))
 
-print([[0, max(0,-pad_first)], [0, max(0,-pad_second)], [0, max(0,-pad_three)]],"padded_vector")
-vector_1 = tf.ones(shape=(12, 5, 6))
-vector_2 = tf.ones(shape=(10,8,14))
-print(TensorListTensor()([vector_1, None]))
-exit()
