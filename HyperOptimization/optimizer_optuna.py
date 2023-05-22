@@ -18,6 +18,7 @@ x_test = x_test.astype("float32") / 255.0
 # Add a channel dimension (for grayscale images)
 x_train = tf.expand_dims(x_train, -1)
 x_test = tf.expand_dims(x_test, -1)
+
 def OptunaListElements(name_layer,liste,key,trial):
     """
     Generates an optimal value for a hyperparameter using Optuna based on the given list.
@@ -102,24 +103,53 @@ class Reshape_Layer(tf.keras.layers.Layer):
             return self.reshape(inputs)
         else:
             return inputs
+
+class final_layer:
+    @staticmethod
+    def Transformer(trial,i,j,x,y=None):
+        if y is not None:
+            return R_TransformerEncoderBlock_layer(*loop_initializer(R_TransformerEncoderBlock_layer, trial, i, j))([x,y])
+        else:
+            return R_TransformerEncoderBlock_layer(*loop_initializer(R_TransformerEncoderBlock_layer, trial, i, j))([x,x])
+    @staticmethod
+    def CNN(trial,i,j,x,y=None):
+        if y is not None:
+            return CNN_Layer(*loop_initializer(CNN_Layer, trial, i, j))([x,y])
+        else:
+            return CNN_Layer(*loop_initializer(CNN_Layer, trial, i, j))(x)
+    @staticmethod
+    def MLP(trial,i,j,x,y=None):
+        if y is not None:
+            return Perceptron_Layer(*loop_initializer(Perceptron_Layer, trial, i, j))([x,y])
+        else:
+            return Perceptron_Layer(*loop_initializer(Perceptron_Layer, trial, i, j))(x)
+    @staticmethod
+    def RNN(trial,i,j,x,y=None):
+        if y is not None:
+            return R_RNN_Layer(*loop_initializer(R_RNN_Layer, trial, i, j))([x,y])
+        else:
+            return R_RNN_Layer(*loop_initializer(R_RNN_Layer, trial, i, j))(x)
+
+    @staticmethod
+    def weighted_layer(trial,i,j,x,y=None):
+        name_layer = trial.suggest_categorical(f"layer_{i}_{j}", ["Transformer", "CNN", "RNN", "MLP"])
+        z = getattr(final_layer,name_layer)(trial,i,j,x,y)
+        return z
+
+
+
+
 def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test):
+
     input_layer = tf.keras.layers.Input(shape=(28, 28, 1))
 
-    x = CNN_Layer(*loop_initializer(CNN_Layer, trial, 1, 1))(input_layer)
+    x = final_layer.weighted_layer(trial,1,1,input_layer)
 
-    y = CNN_Layer(*loop_initializer(CNN_Layer, trial, 1, 1))(x)
+    y = final_layer.weighted_layer(trial,1,1,x,input_layer)
 
-
-    x = R_RNN_Layer(*loop_initializer(R_RNN_Layer, trial, 1, 2))(x)
-
-    y = R_TransformerEncoderBlock_layer(*loop_initializer(R_TransformerEncoderBlock_layer, trial, 1, 3))([x,y])
-
-    y = R_RNN_Layer(*loop_initializer(R_RNN_Layer,trial,1,4))([y,x])
-
-    y = Perceptron_Layer(*loop_initializer(Perceptron_Layer, trial, 1, 5))([y,x])
 
     # Flatten the output
-    y = tf.keras.layers.Flatten()(x)
+    y = tf.keras.layers.Flatten()(y)
 
     # Define the output layer
     output = tf.keras.layers.Dense(10, activation="softmax")(y)
