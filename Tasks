@@ -7,14 +7,16 @@ Custom CNN layers **Done**
 Custom MLP layers **Done**
 Custom RNN layers **Done**
 
-Thesis with Airbus on Geometric data ( GNN <3 asked to Guillaume for more details)
-Create a generic code for auto-optimized layer's hyperparameters thanks to Optuna **In progress**
+Thesis with Airbus on Geometric data ( GNN <3 asked to Guillaume for more details) **Done**
+Create a generic code for auto-optimized layer's hyperparameters thanks to Optuna **Done**
     - Should test for Transformers **Done**
     - Adding my customlayers **Done**
-    - Final architecture
+    - Final architecture **Done for the final_layer which is decomposed of two final layers one is composed of four weighted layers while the other is unweighted is composed of two.**
     - Creating a layer for CNN,MLP & RNN for handling a list of two tensors of 3D and 4D **Done**
-Custom Optimizers
-After succeeding all these tasks, create a meta architecture
+
+Custom Optimizers **To do should i use RL for that ? Do a little review**
+
+After succeeding all these tasks, create a meta architecture **To define**
 
 
 Then after succeeding, should launch on our financial data.

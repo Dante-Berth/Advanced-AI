@@ -5,7 +5,7 @@ from CNN.CustomCNN import CNN_Layer
 from MLP.CustomPerceptron import Perceptron_Layer
 from RNN.CustomRNN import RNN_Layer, R_RNN_Layer, Reshape_Layer_3D
 from Transformers.CustomTransformers import TransformerEncoderBlock_layer, R_TransformerEncoderBlock_layer
-
+from Layers.CustomLayers import  SignalLayer, LinalgMonolayer
 import tensorflow as tf
 
 # Load the MNIST dataset
@@ -131,9 +131,29 @@ class final_layer:
             return R_RNN_Layer(*loop_initializer(R_RNN_Layer, trial, i, j))(x)
 
     @staticmethod
+    def Fourrier(trial, i, j, x, y=None):
+        if y is not None:
+            return SignalLayer(*loop_initializer(SignalLayer, trial, i, j))([x,y])
+        else:
+            return SignalLayer(*loop_initializer(SignalLayer, trial, i, j))(x)
+
+    @staticmethod
+    def Linalg(trial, i, j, x, y=None):
+        if y is not None:
+            return LinalgMonolayer(*loop_initializer(LinalgMonolayer, trial, i, j))([x, y])
+        else:
+            return LinalgMonolayer(*loop_initializer(LinalgMonolayer, trial, i, j))(x)
+
+    @staticmethod
     def weighted_layer(trial,i,j,x,y=None):
-        name_layer = trial.suggest_categorical(f"layer_{i}_{j}", ["Transformer", "CNN", "RNN", "MLP"])
+        name_layer = trial.suggest_categorical(f"weighted_layer_{i}_{j}", ["Transformer", "CNN", "RNN", "MLP"])
         z = getattr(final_layer,name_layer)(trial,i,j,x,y)
+        return z
+
+    @staticmethod
+    def unweighted_layer(trial, i, j, x, y=None):
+        name_layer = trial.suggest_categorical(f"unweighted_layer_{i}_{j}", ["Fourrier", "Linalg"])
+        z = getattr(final_layer, name_layer)(trial, i, j, x, y)
         return z
 
 
@@ -144,7 +164,7 @@ def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test)
     input_layer = tf.keras.layers.Input(shape=(28, 28, 1))
 
     x = final_layer.weighted_layer(trial,1,1,input_layer)
-
+    x = final_layer.unweighted_layer(trial,1,1,x)
     y = final_layer.weighted_layer(trial,1,1,x,input_layer)
 
 
