@@ -14,8 +14,8 @@ Create a generic code for auto-optimized layer's hyperparameters thanks to Optun
     - Final architecture **Done for the final_layer which is decomposed of two final layers one is composed of four weighted layers while the other is unweighted is composed of two.**
     - Creating a layer for CNN,MLP & RNN for handling a list of two tensors of 3D and 4D **Done**
 
-Custom Optimizers **To do should i use RL for that ? Do a little review**
-Create **Use only one Optimizer Adam or Adam Belief and try with methods to accelerate his convergence**
+Custom Optimizers **Done**
+Create **Done**
 
 After succeeding all these tasks, create a meta architecture **To define**
 

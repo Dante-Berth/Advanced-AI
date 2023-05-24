@@ -28,7 +28,7 @@ class AdaBelief_optimizer:
             "hyperparameter_min_lr": [1,100],
             "hyperparameter_initial_learning_rate": [1,1000],
             "hyperparameter_maximal_learning_rate": [1,90],
-            "hyperparameter_step_size": ["1e3", "5e3", "1e4", "5e4", "1e5", "5e5", "1e6", "5e6", "1e7"],
+            "hyperparameter_step_size": ["1000", "5000", "10000", "50000", "100000", "500000", "1000000", "5000000", "10000000"],
             "hyperparameter_gamma_percent": [80, 99, 1],
             "hyperparameter_sync_period": [2, 10, 1],
             "hyperparameter_slow_step_size": [1, 10, 1]
@@ -40,7 +40,7 @@ class AdaBelief_optimizer:
                  gamma_percent, sync_period, slow_step_size, batch_size=64, size_dataset=1000):
         print(learning_rate, warmup, min_lr, initial_learning_rate, maximal_learning_rate, step_size,
                  gamma_percent, sync_period, slow_step_size, batch_size,size_dataset)
-        exit()
+
         opt = tfa.optimizers.AdaBelief(
             learning_rate=learning_rate//1*1e-4,
             total_steps=int(batch_size * size_dataset),
