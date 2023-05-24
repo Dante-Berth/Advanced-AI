@@ -7,6 +7,7 @@ from RNN.CustomRNN import RNN_Layer, R_RNN_Layer, Reshape_Layer_3D
 from Transformers.CustomTransformers import TransformerEncoderBlock_layer, R_TransformerEncoderBlock_layer
 from Layers.CustomLayers import  SignalLayer, LinalgMonolayer
 import tensorflow as tf
+import tensorflow_addons as tfa
 
 # Load the MNIST dataset
 (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
@@ -176,8 +177,29 @@ def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test)
 
     model = tf.keras.models.Model(inputs=input_layer, outputs=output)
 
+    initial_learning_rate = 0.001
+    maximal_learning_rate = 0.01
+    step_size = 2000
+    gamma = 0.9
+
+    opt = tfa.optimizers.AdaBelief(
+        learning_rate=1e-3,
+        total_steps=10000,
+        warmup_proportion=0.1,
+        min_lr=1e-5,
+        rectify=True,
+    )
+    lr_schedule = tfa.optimizers.ExponentialCyclicalLearningRate(
+        initial_learning_rate=initial_learning_rate,
+        maximal_learning_rate=maximal_learning_rate,
+        step_size=step_size,
+        gamma=gamma
+    )
+    opt.learning_rate = lr_schedule
+    ranger = tfa.optimizers.Lookahead(opt, sync_period=6, slow_step_size=0.5)
+
     model.compile(
-        optimizer="adam",
+        optimizer=ranger,
         loss=tf.keras.losses.SparseCategoricalCrossentropy(),
         metrics=["accuracy"]
     )
