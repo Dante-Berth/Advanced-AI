@@ -253,6 +253,8 @@ class R_TransformerEncoderBlock_layer(tf.keras.layers.Layer):
     def __init__(self, attention_layer, feedforward_layer, num_random_features,
                  num_blocks_intermediate, num_heads, inner_dim, inner_activation, key_dim):
         super(R_TransformerEncoderBlock_layer, self).__init__()
+        if inner_activation == "MetaActivationLayer":
+            inner_activation = MetaActivationLayer()
         self.transformer = TransformerEncoderBlock_layer(attention_layer, feedforward_layer, num_random_features,
                                                          num_blocks_intermediate, num_heads, inner_dim,
                                                          inner_activation, key_dim)
@@ -271,7 +273,7 @@ class R_TransformerEncoderBlock_layer(tf.keras.layers.Layer):
             "hyperparameter_num_random_features": [8, 80],
             "hyperparameter_num_heads": [2, 12, 1],
             "hyperparameter_inner_dim": [8, 80],
-            "hyperparameter_inner_activation": ["sigmoid", "tanh", MetaActivationLayer(), "relu"],
+            "hyperparameter_inner_activation": ["sigmoid", "tanh", "MetaActivationLayer", "relu"],
             "hyperparameter_key_dim": [8, 80]
 
         }

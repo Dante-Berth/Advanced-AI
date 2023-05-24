@@ -5,10 +5,10 @@ from CNN.CustomCNN import CNN_Layer
 from MLP.CustomPerceptron import Perceptron_Layer
 from RNN.CustomRNN import RNN_Layer, R_RNN_Layer, Reshape_Layer_3D
 from Transformers.CustomTransformers import TransformerEncoderBlock_layer, R_TransformerEncoderBlock_layer
-from Layers.CustomLayers import  SignalLayer, LinalgMonolayer
+from Layers.CustomLayers import SignalLayer, LinalgMonolayer
 import tensorflow as tf
 import tensorflow_addons as tfa
-
+from Optimizers.CustomOptimizer import AdaBelief_optimizer
 # Load the MNIST dataset
 (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
 
@@ -176,7 +176,7 @@ def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test)
     output = tf.keras.layers.Dense(10, activation="softmax")(y)
 
     model = tf.keras.models.Model(inputs=input_layer, outputs=output)
-
+    """
     initial_learning_rate = 0.001
     maximal_learning_rate = 0.01
     step_size = 2000
@@ -197,12 +197,16 @@ def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test)
     )
     opt.learning_rate = lr_schedule
     ranger = tfa.optimizers.Lookahead(opt, sync_period=6, slow_step_size=0.5)
-
+    """
+    print("there")
+    ranger = AdaBelief_optimizer.init(*(loop_initializer(AdaBelief_optimizer, trial, -1, -1) + [32, 1000]))
+    print("success")
     model.compile(
         optimizer=ranger,
         loss=tf.keras.losses.SparseCategoricalCrossentropy(),
         metrics=["accuracy"]
     )
+
     model.fit(x_train, y_train, epochs=5, validation_data=(x_test, y_test), verbose=1)
 
     _, accuracy = model.evaluate(x_test, y_test)
