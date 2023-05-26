@@ -168,15 +168,15 @@ class final_layer:
 
 
 
-def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test):
+def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test,width=10, depth=10):
 
     input_layer = tf.keras.layers.Input(shape=(28, 28, 1))
-    trial.suggest_categorical
-
-
-    x = final_layer.weighted_layer(trial,1,1,input_layer)
-    x = final_layer.unweighted_layer(trial,1,1,x)
-    y = final_layer.weighted_layer(trial,1,1,x,input_layer)
+    dictionnary = {}
+    for i in range(width):
+        for j in range(depth):
+            x = final_layer.weighted_layer(trial,i,j,input_layer)
+            x = final_layer.unweighted_layer(trial,i,j,x)
+            y = final_layer.weighted_layer(trial,i,j,x,input_layer)
 
 
     # Flatten the output
