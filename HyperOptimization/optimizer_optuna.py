@@ -6,6 +6,7 @@ from MLP.CustomPerceptron import Perceptron_Layer
 from RNN.CustomRNN import RNN_Layer, R_RNN_Layer, Reshape_Layer_3D
 from Transformers.CustomTransformers import TransformerEncoderBlock_layer, R_TransformerEncoderBlock_layer
 from Layers.CustomLayers import SignalLayer, LinalgMonolayer
+from Fromtwotensorsintoonetensor import R_ListTensor
 import tensorflow as tf
 import tensorflow_addons as tfa
 from Optimizers.CustomOptimizer import AdaBelief_optimizer
@@ -146,6 +147,13 @@ class final_layer:
             return LinalgMonolayer(*loop_initializer(LinalgMonolayer, trial, i, j))(x)
 
     @staticmethod
+    def Linalg(trial, i, j, x, y=None):
+        if y is not None:
+            return R_ListTensor()([x,y])
+        else:
+            return x
+
+    @staticmethod
     def weighted_layer(trial,i,j,x,y=None):
         name_layer = trial.suggest_categorical(f"weighted_layer_{i}_{j}", ["Transformer", "CNN", "RNN", "MLP"])
         z = getattr(final_layer,name_layer)(trial,i,j,x,y)
@@ -163,6 +171,8 @@ class final_layer:
 def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test):
 
     input_layer = tf.keras.layers.Input(shape=(28, 28, 1))
+    trial.suggest_categorical
+
 
     x = final_layer.weighted_layer(trial,1,1,input_layer)
     x = final_layer.unweighted_layer(trial,1,1,x)
@@ -176,31 +186,9 @@ def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test)
     output = tf.keras.layers.Dense(10, activation="softmax")(y)
 
     model = tf.keras.models.Model(inputs=input_layer, outputs=output)
-    """
-    initial_learning_rate = 0.001
-    maximal_learning_rate = 0.01
-    step_size = 2000
-    gamma = 0.9
 
-    opt = tfa.optimizers.AdaBelief(
-        learning_rate=1e-3,
-        total_steps=10000,
-        warmup_proportion=0.1,
-        min_lr=1e-5,
-        rectify=True,
-    )
-    lr_schedule = tfa.optimizers.ExponentialCyclicalLearningRate(
-        initial_learning_rate=initial_learning_rate,
-        maximal_learning_rate=maximal_learning_rate,
-        step_size=step_size,
-        gamma=gamma
-    )
-    opt.learning_rate = lr_schedule
-    ranger = tfa.optimizers.Lookahead(opt, sync_period=6, slow_step_size=0.5)
-    """
-    print("there")
     ranger = AdaBelief_optimizer.init(*(loop_initializer(AdaBelief_optimizer, trial, -1, -1) + [32, 1000]))
-    print("success")
+
     model.compile(
         optimizer=ranger,
         loss=tf.keras.losses.SparseCategoricalCrossentropy(),
