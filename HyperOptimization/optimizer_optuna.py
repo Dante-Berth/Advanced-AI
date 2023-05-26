@@ -107,6 +107,11 @@ class Reshape_Layer(tf.keras.layers.Layer):
             return inputs
 
 class final_layer:
+    """
+    final_layer is the class containing the functions for building the Meta AI, among these functions they are\
+    there are two components, the first one is dedicated to the weighted layers while the second one referred to \
+    to unweighted layers which are important for any unusual Deep Learning transformations.
+    """
     @staticmethod
     def Transformer(trial,i,j,x,y=None):
         if y is not None:
@@ -164,6 +169,12 @@ class final_layer:
         name_layer = trial.suggest_categorical(f"unweighted_layer_{i}_{j}", ["Fourrier", "Linalg"])
         z = getattr(final_layer, name_layer)(trial, i, j, x, y)
         return z
+class loop_final_layer:
+    @staticmethod
+    def loop(trial, i, j, x, list_y=None, num_layers=1):
+        for num_layer in num_layers:
+            x = final_layer.weighted_layer(trial, i + num_layer, j, x, list_y[i])
+        return x
 
 
 
@@ -172,6 +183,10 @@ def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test,
 
     input_layer = tf.keras.layers.Input(shape=(28, 28, 1))
     dictionnary = {}
+    width = 1
+    depth = 1
+    nb_layers_first = trial.suggest_int(f"nb_layers_width={width}_depth={depth}",1,5)
+
     for i in range(width):
         for j in range(depth):
             x = final_layer.weighted_layer(trial,i,j,input_layer)
