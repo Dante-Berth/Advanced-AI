@@ -180,7 +180,8 @@ class loop_final_layer:
             list_y = [None]
         skipped_layer = trial.suggest_int(f"skipped_layer_{i}_{j}",0,1,step=1)
         if skipped_layer == 0:
-            return x
+            list_outputs.append(x)
+            return list_outputs
         else:
             combinaison = trial.suggest_int(f"combinaison_layer_{i}_{j}",0,2,step=1)
             if combinaison==0:
@@ -197,6 +198,8 @@ class loop_final_layer:
                                                                           ["Fourrier", "Linalg"])
                     x = getattr(final_layer, name_weighted_layer)(trial, i+2*num_layer, j, x, list_y[index_list_y])
                     x = getattr(final_layer, name_weighted_layer_layer)(trial, i+(2*num_layer+1), j, x, list_y[index_list_y])
+                    list_outputs.append(x)
+
             elif combinaison==1:
                 num_layers = trial.suggest_int(f"num_layers_{i}_{j}", 1, 5)
                 for num_layer in range(num_layers):
@@ -208,10 +211,14 @@ class loop_final_layer:
                                                                     ["Transformer", "CNN", "RNN", "MLP"])
 
                     x = getattr(final_layer, name_weighted_layer)(trial, i, j, x, list_y[index_list_y])
+                    list_outputs.append(x)
+
             else:
                 name_weighted_layer_layer = trial.suggest_categorical(f"unweighted_layer_{i}_{j}", ["Fourrier", "Linalg"])
                 x = getattr(final_layer, name_weighted_layer_layer)(trial, i , j, x,
                                                                     list_y[-1])
+                list_outputs.append(x)
+
             return x
 
 
@@ -224,13 +231,13 @@ def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test,
     dictionnary = {}
     width = 1
     depth = 1
-    x = final_layer.weighted_layer(trial,1,1,input_layer)
+    x = loop_final_layer.layer_loop(trial,1,1,input_layer)
 
 
 
-
+    print(x[-1].shape)
     # Flatten the output
-    x = tf.keras.layers.Flatten()(x)
+    x = tf.keras.layers.Flatten()(x[-1])
 
 
     output = tf.keras.layers.Dense(10, activation="softmax")(x)
@@ -238,7 +245,7 @@ def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test,
     model = tf.keras.models.Model(inputs=input_layer, outputs=output)
 
     ranger = AdaBelief_optimizer.init(*(loop_initializer(AdaBelief_optimizer, trial, -1, -1) + [32, 1000]))
-
+    ranger = tf.keras.optimizers.Adam()
     model.compile(
         optimizer=ranger,
         loss=tf.keras.losses.SparseCategoricalCrossentropy(),

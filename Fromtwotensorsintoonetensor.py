@@ -48,7 +48,8 @@ class R_ListTensor(tf.keras.layers.Layer):
         Returns:
             tf.Tensor: Output tensor.
         """
-        if isinstance(x[1], tf.Tensor):
+        if len(x)>1 and isinstance(x[1], tf.Tensor):
+            print(x[1])
             x[0], x[1] = self.creator_pad(x[0],x[1])
             y = x[0] + x[1]
         else:
@@ -122,4 +123,5 @@ if __name__=="__main__":
     vector_1 = tf.ones(shape=(12, 5, 6,2))
     vector_2 = tf.ones(shape=(10,8,14))
     print(R_ListTensor()([vector_1, vector_2]))
+    print(R_ListTensor()([vector_1]))
 
