@@ -1,3 +1,5 @@
+import random
+
 import optuna
 import importlib.util
 import tensorflow as tf
@@ -171,29 +173,47 @@ class final_layer:
         return z
 class loop_final_layer:
     @staticmethod
-    def same_layer_loop(trial, i, j, x, list_y=None):
-        skipped_layer = trial.suggest_categorical(f"skipped_layer_{i}_{j}",["True","False"])
-        if skipped_layer == "True":
-            return x
-        else:
-            num_layers = trial.suggest_int(f"num_layers_{i}_{j}",1,5)
-            name_weighted_layer = trial.suggest_categorical(f"weighted_layer_{i}_{j}", ["Transformer", "CNN", "RNN", "MLP"])
-            name_weighted_layer_layer = trial.suggest_categorical(f"unweighted_layer_{i}_{j}", ["Fourrier", "Linalg"])
-            for num_layer in num_layers:
-                x = getattr(final_layer, name_weighted_layer)(trial, i+2*num_layer, j, x, list_y[i+num_layer])
-                x = getattr(final_layer, name_weighted_layer_layer)(trial, i+(2*num_layer+1), j, x, list_y[i+num_layer])
-        return x
-    @staticmethod
     def layer_loop(trial, i, j, x, list_y=None):
-        skipped_layer = trial.suggest_categorical(f"skipped_layer_{i}_{j}", ["True", "False"])
-        if skipped_layer == "True":
+        list_outputs = []
+        stochastic = trial.suggest_int(f"stochastic_nas_layer_{i}_{j}",0,1,step=1)
+        if list_y is None:
+            list_y = [None]
+        skipped_layer = trial.suggest_int(f"skipped_layer_{i}_{j}",0,1,step=1)
+        if skipped_layer == 0:
             return x
         else:
-            num_layers = trial.suggest_int(f"num_layers_{i}_{j}", 1, 5)
-            for num_layer in num_layers:
-                x = final_layer.weighted_layer(trial, i+2*num_layer, j, x, list_y[num_layer])
-                x = final_layer.unweighted_layer(trial, i+(2*num_layer+1), j, x, list_y[num_layer])
+            combinaison = trial.suggest_int(f"combinaison_layer_{i}_{j}",0,2,step=1)
+            if combinaison==0:
+                num_layers = trial.suggest_int(f"num_layers_{i}_{j}", 1, 5)
+
+                for num_layer in range(num_layers):
+                    if stochastic==1:
+                        index_list_y = random.randint(0,len(list_y)-1)
+                    else:
+                        index_list_y = -1
+                    name_weighted_layer = trial.suggest_categorical(f"weighted_layer_{i}_{j}",
+                                                                    ["Transformer", "CNN", "RNN", "MLP"])
+                    name_weighted_layer_layer = trial.suggest_categorical(f"unweighted_layer_{i}_{j}",
+                                                                          ["Fourrier", "Linalg"])
+                    x = getattr(final_layer, name_weighted_layer)(trial, i+2*num_layer, j, x, list_y[index_list_y])
+                    x = getattr(final_layer, name_weighted_layer_layer)(trial, i+(2*num_layer+1), j, x, list_y[index_list_y])
+            elif combinaison==1:
+                num_layers = trial.suggest_int(f"num_layers_{i}_{j}", 1, 5)
+                for num_layer in range(num_layers):
+                    if stochastic==1:
+                        index_list_y = random.randint(0,len(list_y)-1)
+                    else:
+                        index_list_y = -1
+                    name_weighted_layer = trial.suggest_categorical(f"weighted_layer_{i}_{j}",
+                                                                    ["Transformer", "CNN", "RNN", "MLP"])
+
+                    x = getattr(final_layer, name_weighted_layer)(trial, i, j, x, list_y[index_list_y])
+            else:
+                name_weighted_layer_layer = trial.suggest_categorical(f"unweighted_layer_{i}_{j}", ["Fourrier", "Linalg"])
+                x = getattr(final_layer, name_weighted_layer_layer)(trial, i , j, x,
+                                                                    list_y[-1])
             return x
+
 
 
 
@@ -204,20 +224,16 @@ def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test,
     dictionnary = {}
     width = 1
     depth = 1
-    nb_layers_first = trial.suggest_int(f"nb_layers_width={width}_depth={depth}",1,5)
+    x = final_layer.weighted_layer(trial,1,1,input_layer)
 
-    for i in range(width):
-        for j in range(depth):
-            x = final_layer.weighted_layer(trial,i,j,input_layer)
-            x = final_layer.unweighted_layer(trial,i,j,x)
-            y = final_layer.weighted_layer(trial,i,j,x,input_layer)
+
 
 
     # Flatten the output
-    y = tf.keras.layers.Flatten()(y)
+    x = tf.keras.layers.Flatten()(x)
 
-    # Define the output layer
-    output = tf.keras.layers.Dense(10, activation="softmax")(y)
+
+    output = tf.keras.layers.Dense(10, activation="softmax")(x)
 
     model = tf.keras.models.Model(inputs=input_layer, outputs=output)
 
@@ -229,11 +245,11 @@ def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test,
         metrics=["accuracy"]
     )
 
-    model.fit(x_train, y_train, epochs=5, validation_data=(x_test, y_test), verbose=1)
+    model.fit(x_train, y_train, epochs=10, validation_data=(x_test, y_test), verbose=1)
 
     _, accuracy = model.evaluate(x_test, y_test)
 
     return -accuracy
 study = optuna.create_study(direction="maximize")
-study.optimize(objective, n_trials=5)
+study.optimize(objective, n_trials=10)
 

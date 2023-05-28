@@ -38,8 +38,7 @@ class AdaBelief_optimizer:
     @staticmethod
     def init(learning_rate, warmup, min_lr, initial_learning_rate, maximal_learning_rate, step_size,
                  gamma_percent, sync_period, slow_step_size, batch_size=64, size_dataset=1000):
-        print(learning_rate, warmup, min_lr, initial_learning_rate, maximal_learning_rate, step_size,
-                 gamma_percent, sync_period, slow_step_size, batch_size,size_dataset)
+
 
         opt = tfa.optimizers.AdaBelief(
             learning_rate=learning_rate//1*1e-4,
