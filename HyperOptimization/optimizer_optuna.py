@@ -171,10 +171,29 @@ class final_layer:
         return z
 class loop_final_layer:
     @staticmethod
-    def loop(trial, i, j, x, list_y=None, num_layers=1):
-        for num_layer in num_layers:
-            x = final_layer.weighted_layer(trial, i + num_layer, j, x, list_y[i])
+    def same_layer_loop(trial, i, j, x, list_y=None):
+        skipped_layer = trial.suggest_categorical(f"skipped_layer_{i}_{j}",["True","False"])
+        if skipped_layer == "True":
+            return x
+        else:
+            num_layers = trial.suggest_int(f"num_layers_{i}_{j}",1,5)
+            name_weighted_layer = trial.suggest_categorical(f"weighted_layer_{i}_{j}", ["Transformer", "CNN", "RNN", "MLP"])
+            name_weighted_layer_layer = trial.suggest_categorical(f"unweighted_layer_{i}_{j}", ["Fourrier", "Linalg"])
+            for num_layer in num_layers:
+                x = getattr(final_layer, name_weighted_layer)(trial, i+2*num_layer, j, x, list_y[i+num_layer])
+                x = getattr(final_layer, name_weighted_layer_layer)(trial, i+(2*num_layer+1), j, x, list_y[i+num_layer])
         return x
+    @staticmethod
+    def layer_loop(trial, i, j, x, list_y=None):
+        skipped_layer = trial.suggest_categorical(f"skipped_layer_{i}_{j}", ["True", "False"])
+        if skipped_layer == "True":
+            return x
+        else:
+            num_layers = trial.suggest_int(f"num_layers_{i}_{j}", 1, 5)
+            for num_layer in num_layers:
+                x = final_layer.weighted_layer(trial, i+2*num_layer, j, x, list_y[num_layer])
+                x = final_layer.unweighted_layer(trial, i+(2*num_layer+1), j, x, list_y[num_layer])
+            return x
 
 
 

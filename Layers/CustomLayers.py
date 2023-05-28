@@ -130,11 +130,11 @@ if __name__ == "__main__":
 
 
 
-    perceptron_layer = LinalgMonolayer("adjoint")
+    linalgmonolayer = LinalgMonolayer("adjoint")
 
     # Pass the input tensor through the layer
     tensor_5 = [tensor_4, tensor_3]
-    output = perceptron_layer(tensor_5)
+    output = linalgmonolayer(tensor_5)
 
     perceptron_layer = LinalgMonolayer("adjoint")
     output = perceptron_layer(tensor_4)
