@@ -108,6 +108,8 @@ class TransformerEncoderBlock_layer(tfm.nlp.layers.TransformerEncoderBlock):
             *args: additional positional arguments to pass to the base TransformerEncoderBlock class.
             **kwargs: additional keyword arguments to pass to the base TransformerEncoderBlock class.
         """
+        if inner_activation=="MetaActivationLayer":
+            inner_activation = MetaActivationLayer()
 
         self._attention_layer = None
         self.attention_layer = attention_layer
@@ -120,6 +122,8 @@ class TransformerEncoderBlock_layer(tfm.nlp.layers.TransformerEncoderBlock):
         self.inner_activation = inner_activation
         self.key_dim = key_dim
         self.feature_transform = "exp"
+        self.layernorm = tf.keras.layers.LayerNormalization()
+
         super(TransformerEncoderBlock_layer, self).__init__(num_attention_heads=self.num_heads,
                                                             inner_dim=self.inner_dim,
                                                             inner_activation=self.inner_activation,
@@ -139,7 +143,7 @@ class TransformerEncoderBlock_layer(tfm.nlp.layers.TransformerEncoderBlock):
             "hyperparameter_num_random_features": [8, 80],
             "hyperparameter_num_heads": [2, 12, 1],
             "hyperparameter_inner_dim": [8, 80],
-            "hyperparameter_inner_activation": ["sigmoid", "tanh", MetaActivationLayer(), "relu"],
+            "hyperparameter_inner_activation": ["sigmoid", "tanh", "MetaActivationLayer", "relu"],
             "hyperparameter_key_dim": [8, 80]
 
         }
@@ -243,7 +247,7 @@ class TransformerEncoderBlock_layer(tfm.nlp.layers.TransformerEncoderBlock):
             Returns:
                 The output tensor.
         """
-        return tf.keras.layers.LayerNormalization()(super().call(inputs))
+        return self.layernorm(super().call(inputs))
 
 
 class R_TransformerEncoderBlock_layer(tf.keras.layers.Layer):
@@ -289,6 +293,7 @@ class R_TransformerEncoderBlock_layer(tf.keras.layers.Layer):
         self.reshape_layer_main = Reshape_Layer_3D()
         self.reshape_layer_main.build(input_tensor_shape)
         reshaped_shape = self.reshape_layer_main.compute_output_shape(input_tensor_shape)
+
         self.transformer.build(reshaped_shape)
 
 
@@ -316,20 +321,24 @@ if __name__ == "__main__":
 
     tensor_123 = tf.ones((4, 5, 6, 7))
     tensor_456 = tf.ones((4, 5, 6, 7))
-    print(R_TransformerEncoderBlock_layer(attention_layer="MultiHeadAttention",
+    R_TransformerEncoderBlock_layer(attention_layer="MultiHeadAttention",
         feedforward_layer="GatedFeedforward", num_random_features=256,
-                 num_blocks_intermediate=2, num_heads=8, inner_dim=42, inner_activation="gelu", key_dim=32)([tensor_123, None]))
-    exit()
+                 num_blocks_intermediate=2, num_heads=8, inner_dim=42, inner_activation="gelu", key_dim=32)([tensor_123, None])
 
-    print("second layer")
-    print(custom_transformer_block(transform_tensors([tensor_123, None, None])))
-
+    R_TransformerEncoderBlock_layer(attention_layer="MultiHeadAttention",
+                                    feedforward_layer="GatedFeedforward", num_random_features=256,
+                                    num_blocks_intermediate=2, num_heads=8, inner_dim=42, inner_activation="gelu",
+                                    key_dim=32)([tensor_123,None])
+    print("okay")
     # Instantiate the custom TransformerEncoderBlock with the custom layers
     custom_transformer_block = TransformerEncoderBlock_layer(
         attention_layer="KernelAttention",
         feedforward_layer="GatedFeedforward"
     )
     tensor_3 = tf.ones((48, 23, 24))
-    tensor_34 = tf.ones((48, 12, 38))
-    print(custom_transformer_block(transform_tensors([tensor_3, tensor_34, None])))
+    tensor_34 = tf.ones((48, 12, 38,48))
+    R_TransformerEncoderBlock_layer(attention_layer="MultiHeadAttention",
+                                    feedforward_layer="GatedFeedforward", num_random_features=256,
+                                    num_blocks_intermediate=2, num_heads=8, inner_dim=42, inner_activation="gelu",
+                                    key_dim=32)([tensor_3, tensor_34])
     print("success")

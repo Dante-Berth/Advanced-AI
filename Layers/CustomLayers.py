@@ -81,7 +81,11 @@ class LinalgMonolayer(tf.keras.layers.Layer):
         if isinstance(input,list):
             input = self.R_ListTensor.call(input)
         if self.linalg_mono_functions in ["normalize","qr","svd"]:
-            return self.linalg_layer(input)[0]
+            output = self.linalg_layer(input)[0]
+            if self.linalg_mono_functions == "svd":
+                return tf.linalg.diag(output)
+            else:
+                return output
         else:
             return self.linalg_layer(input)
 
@@ -136,6 +140,18 @@ if __name__ == "__main__":
     tensor_5 = [tensor_4, tensor_3]
     output = linalgmonolayer(tensor_5)
 
-    perceptron_layer = LinalgMonolayer("adjoint")
+    perceptron_layer = LinalgMonolayer("qr")
     output = perceptron_layer(tensor_4)
+    print(tensor_4.shape,output.shape)
+
+    print( tf.linalg.diag(tf.linalg.svd(
+        tensor_4, full_matrices=True, compute_uv=True, name=None
+    )[0]).shape)
+    print(tf.linalg.svd(
+        tensor_4, full_matrices=True, compute_uv=True, name=None
+    )[1].shape)
+    print(tf.linalg.svd(
+        tensor_4, full_matrices=True, compute_uv=True, name=None
+    )[2].shape)
+
     print("success")

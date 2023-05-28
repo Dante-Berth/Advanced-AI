@@ -154,7 +154,7 @@ class final_layer:
             return LinalgMonolayer(*loop_initializer(LinalgMonolayer, trial, i, j))(x)
 
     @staticmethod
-    def Linalg(trial, i, j, x, y=None):
+    def Residual(trial, i, j, x, y=None):
         if y is not None:
             return R_ListTensor()([x,y])
         else:
@@ -162,7 +162,7 @@ class final_layer:
 
     @staticmethod
     def weighted_layer(trial,i,j,x,y=None):
-        name_layer = trial.suggest_categorical(f"weighted_layer_{i}_{j}", ["Transformer", "CNN", "RNN", "MLP"])
+        name_layer = trial.suggest_categorical(f"weighted_layer_{i}_{j}", ["Transformer", "RNN"])
         z = getattr(final_layer,name_layer)(trial,i,j,x,y)
         return z
 
@@ -181,61 +181,67 @@ class loop_final_layer:
         skipped_layer = trial.suggest_int(f"skipped_layer_{i}_{j}",0,1,step=1)
         if skipped_layer == 0:
             list_outputs.append(x)
+            print(x.shape)
             return list_outputs
         else:
             combinaison = trial.suggest_int(f"combinaison_layer_{i}_{j}",0,2,step=1)
             if combinaison==0:
-                num_layers = trial.suggest_int(f"num_layers_{i}_{j}", 1, 5)
+                num_layers = trial.suggest_int(f"num_layers_{i}_{j}", 1, 4)
 
                 for num_layer in range(num_layers):
                     if stochastic==1:
                         index_list_y = random.randint(0,len(list_y)-1)
                     else:
                         index_list_y = -1
-                    name_weighted_layer = trial.suggest_categorical(f"weighted_layer_{i}_{j}",
-                                                                    ["Transformer", "CNN", "RNN", "MLP"])
-                    name_weighted_layer_layer = trial.suggest_categorical(f"unweighted_layer_{i}_{j}",
+                    name_weighted_layer = trial.suggest_categorical(f"weighted_layer_{i}_{j}",["Transformer", "RNN","MLP","CNN"])
+                    name_unweighted_layer = trial.suggest_categorical(f"unweighted_layer_{i}_{j}",
                                                                           ["Fourrier", "Linalg"])
+                    print(x.shape)
                     x = getattr(final_layer, name_weighted_layer)(trial, i+2*num_layer, j, x, list_y[index_list_y])
-                    x = getattr(final_layer, name_weighted_layer_layer)(trial, i+(2*num_layer+1), j, x, list_y[index_list_y])
+                    print(x.shape)
+                    x = getattr(final_layer, name_unweighted_layer)(trial, i+(2*num_layer+1), j, x, list_y[index_list_y])
+                    print(x.shape)
                     list_outputs.append(x)
 
             elif combinaison==1:
-                num_layers = trial.suggest_int(f"num_layers_{i}_{j}", 1, 5)
+                num_layers = trial.suggest_int(f"num_layers_{i}_{j}", 1, 4)
                 for num_layer in range(num_layers):
                     if stochastic==1:
                         index_list_y = random.randint(0,len(list_y)-1)
                     else:
                         index_list_y = -1
-                    name_weighted_layer = trial.suggest_categorical(f"weighted_layer_{i}_{j}",
-                                                                    ["Transformer", "CNN", "RNN", "MLP"])
-
+                    name_weighted_layer = trial.suggest_categorical(f"weighted_layer_{i}_{j}",["Transformer", "RNN","MLP","CNN"])
+                    print(x.shape)
                     x = getattr(final_layer, name_weighted_layer)(trial, i, j, x, list_y[index_list_y])
+                    print(x.shape)
                     list_outputs.append(x)
 
             else:
                 name_weighted_layer_layer = trial.suggest_categorical(f"unweighted_layer_{i}_{j}", ["Fourrier", "Linalg"])
+                print(x.shape)
                 x = getattr(final_layer, name_weighted_layer_layer)(trial, i , j, x,
                                                                     list_y[-1])
+                print(x.shape)
                 list_outputs.append(x)
 
-            return x
+            return list_outputs
 
 
 
 
 
-def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test,width=10, depth=10):
+def objective(trial,x_train=x_train[:200],y_train=y_train[:200],x_test=x_test[:200],y_test=y_test[:200],width=10, depth=10):
 
     input_layer = tf.keras.layers.Input(shape=(28, 28, 1))
     dictionnary = {}
     width = 1
     depth = 1
+
     x = loop_final_layer.layer_loop(trial,1,1,input_layer)
 
 
 
-    print(x[-1].shape)
+
     # Flatten the output
     x = tf.keras.layers.Flatten()(x[-1])
 
@@ -244,7 +250,7 @@ def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test,
 
     model = tf.keras.models.Model(inputs=input_layer, outputs=output)
 
-    ranger = AdaBelief_optimizer.init(*(loop_initializer(AdaBelief_optimizer, trial, -1, -1) + [32, 1000]))
+    #ranger = AdaBelief_optimizer.init(*(loop_initializer(AdaBelief_optimizer, trial, -1, -1) + [32, 1000]))
     ranger = tf.keras.optimizers.Adam()
     model.compile(
         optimizer=ranger,
@@ -252,11 +258,11 @@ def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test,
         metrics=["accuracy"]
     )
 
-    model.fit(x_train, y_train, epochs=10, validation_data=(x_test, y_test), verbose=1)
+    model.fit(x_train, y_train, epochs=1, validation_data=(x_test, y_test), verbose=1)
 
     _, accuracy = model.evaluate(x_test, y_test)
 
     return -accuracy
 study = optuna.create_study(direction="maximize")
-study.optimize(objective, n_trials=10)
+study.optimize(objective, n_trials=100)
 
