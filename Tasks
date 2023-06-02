@@ -17,9 +17,11 @@ Create a generic code for auto-optimized layer's hyperparameters thanks to Optun
 Custom Optimizers **Done**
 Create **Done**
 
-After succeeding all these tasks, create a meta architecture **Should end the program has intelligently think how the loop works ( is it a full block of the same layer or possible differnt layers**
+After succeeding all these tasks, create a meta architecture **To be improved**
+
+Create a function for saving the best model according to validation loss **To Do**
+
+Improve the code **To Do**
 
 
-
-Then after succeeding, should launch on our financial data.
-
+Then after succeeding, should launch on our financial data. Then the Neural network would be better than the previous one and we could propose the next AI version to our customers.
