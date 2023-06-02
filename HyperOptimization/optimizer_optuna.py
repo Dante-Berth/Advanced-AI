@@ -186,7 +186,7 @@ class loop_final_layer:
         else:
             combinaison = trial.suggest_int(f"combinaison_layer_{i}_{j}",0,2,step=1)
             if combinaison==0:
-                num_layers = trial.suggest_int(f"num_layers_{i}_{j}", 1, 4)
+                num_layers = trial.suggest_int(f"num_layers_{i}_{j}", 1, 5)
 
                 for num_layer in range(num_layers):
                     if stochastic==1:
@@ -204,7 +204,7 @@ class loop_final_layer:
                     list_outputs.append(x)
 
             elif combinaison==1:
-                num_layers = trial.suggest_int(f"num_layers_{i}_{j}", 1, 4)
+                num_layers = trial.suggest_int(f"num_layers_{i}_{j}", 1, 5)
                 for num_layer in range(num_layers):
                     if stochastic==1:
                         index_list_y = random.randint(0,len(list_y)-1)
@@ -230,14 +230,16 @@ class loop_final_layer:
 
 
 
-def objective(trial,x_train=x_train[:200],y_train=y_train[:200],x_test=x_test[:200],y_test=y_test[:200],width=10, depth=10):
+def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test,width=10, depth=10):
 
     input_layer = tf.keras.layers.Input(shape=(28, 28, 1))
+
     dictionnary = {}
     width = 1
     depth = 1
 
     x = loop_final_layer.layer_loop(trial,1,1,input_layer)
+    x = loop_final_layer.layer_loop(trial, 1, 1, x[-1],x)
 
 
 
@@ -262,7 +264,7 @@ def objective(trial,x_train=x_train[:200],y_train=y_train[:200],x_test=x_test[:2
 
     _, accuracy = model.evaluate(x_test, y_test)
 
-    return -accuracy
+    return accuracy
 study = optuna.create_study(direction="maximize")
 study.optimize(objective, n_trials=100)
 
