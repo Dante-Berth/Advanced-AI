@@ -162,7 +162,7 @@ class final_layer:
 
     @staticmethod
     def weighted_layer(trial,i,j,x,y=None):
-        name_layer = trial.suggest_categorical(f"weighted_layer_{i}_{j}", ["Transformer", "RNN"])
+        name_layer = trial.suggest_categorical(f"weighted_layer_{i}_{j}", ["Transformer", "RNN","MLP","RNN"])
         z = getattr(final_layer,name_layer)(trial,i,j,x,y)
         return z
 
@@ -171,60 +171,60 @@ class final_layer:
         name_layer = trial.suggest_categorical(f"unweighted_layer_{i}_{j}", ["Fourrier", "Linalg"])
         z = getattr(final_layer, name_layer)(trial, i, j, x, y)
         return z
+
+
+
+
+
 class loop_final_layer:
     @staticmethod
     def layer_loop(trial, i, j, x, list_y=None):
+        """
+
+        :param trial: trial object
+        :param i: int
+        :param j: int
+        :param x: tf.Tensor
+        :param list_y: list of tf.Tensor
+        :return: list of tf.Tensor
+        """
         list_outputs = []
         stochastic = trial.suggest_int(f"stochastic_nas_layer_{i}_{j}",0,1,step=1)
         if list_y is None:
             list_y = [None]
+        if isinstance(list_y, tf.Tensor):
+            list_y = [list_y]
         skipped_layer = trial.suggest_int(f"skipped_layer_{i}_{j}",0,1,step=1)
-        if skipped_layer == 0:
+        if skipped_layer:
             list_outputs.append(x)
-            print(x.shape)
             return list_outputs
         else:
-            combinaison = trial.suggest_int(f"combinaison_layer_{i}_{j}",0,2,step=1)
-            if combinaison==0:
-                num_layers = trial.suggest_int(f"num_layers_{i}_{j}", 1, 5)
+            num_layers = trial.suggest_int(f"num_layers_{i}_{j}", 1, 5)
 
-                for num_layer in range(num_layers):
-                    if stochastic==1:
-                        index_list_y = random.randint(0,len(list_y)-1)
-                    else:
-                        index_list_y = -1
-                    name_weighted_layer = trial.suggest_categorical(f"weighted_layer_{i}_{j}",["Transformer", "RNN","MLP","CNN"])
-                    name_unweighted_layer = trial.suggest_categorical(f"unweighted_layer_{i}_{j}",
-                                                                          ["Fourrier", "Linalg"])
-                    print(x.shape)
-                    x = getattr(final_layer, name_weighted_layer)(trial, i+2*num_layer, j, x, list_y[index_list_y])
-                    print(x.shape)
-                    x = getattr(final_layer, name_unweighted_layer)(trial, i+(2*num_layer+1), j, x, list_y[index_list_y])
-                    print(x.shape)
-                    list_outputs.append(x)
+            for num_layer in range(num_layers):
+                if stochastic:
+                    index_list_y = random.randint(0,len(list_y)-1)
+                else:
+                    index_list_y = -1
 
-            elif combinaison==1:
-                num_layers = trial.suggest_int(f"num_layers_{i}_{j}", 1, 5)
-                for num_layer in range(num_layers):
-                    if stochastic==1:
-                        index_list_y = random.randint(0,len(list_y)-1)
-                    else:
-                        index_list_y = -1
-                    name_weighted_layer = trial.suggest_categorical(f"weighted_layer_{i}_{j}",["Transformer", "RNN","MLP","CNN"])
-                    print(x.shape)
-                    x = getattr(final_layer, name_weighted_layer)(trial, i, j, x, list_y[index_list_y])
-                    print(x.shape)
-                    list_outputs.append(x)
+                x = final_layer.weighted_layer(trial, i+num_layer, j, x, list_y[index_list_y])
 
-            else:
-                name_weighted_layer_layer = trial.suggest_categorical(f"unweighted_layer_{i}_{j}", ["Fourrier", "Linalg"])
-                print(x.shape)
-                x = getattr(final_layer, name_weighted_layer_layer)(trial, i , j, x,
-                                                                    list_y[-1])
-                print(x.shape)
                 list_outputs.append(x)
 
+
             return list_outputs
+
+    @staticmethod
+    def unweighted_layer_list_tensors(trial,i,j,list_tensors):
+        list_outputs = []
+        for k in range(len(list_tensors)):
+            tensor = list_tensors[k]
+            list_outputs.append(tensor)
+            bool = trial.suggest_int(f"bool_unweighted_layer_{i}_{j+k}",0,1,step=1)
+            if bool:
+                list_outputs.append(final_layer.unweighted_layer(trial,i,j+k,tensor))
+        del list_tensors
+        return list_outputs
 
 
 
@@ -237,8 +237,8 @@ def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test,
     dictionnary = {}
     width = 1
     depth = 1
-
-    x = loop_final_layer.layer_loop(trial,1,1,input_layer)
+    x = loop_final_layer.unweighted_layer_list_tensors(trial,1,1,input_layer)
+    x = loop_final_layer.layer_loop(trial,1,1,x[-1],x)
     x = loop_final_layer.layer_loop(trial, 1, 1, x[-1],x)
 
 

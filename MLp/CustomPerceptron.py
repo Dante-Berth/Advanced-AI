@@ -1,5 +1,6 @@
 import tensorflow as tf
 from Fromtwotensorsintoonetensor import R_ListTensor
+from Activation.CustomActivationLayers import MetaActivationLayer
 class Perceptron_Layer(tf.keras.layers.Layer):
     """
     Perceptron it is exactly like the layer from tensorflow however i added two stasticmethod for hyperoptimization
@@ -7,8 +8,10 @@ class Perceptron_Layer(tf.keras.layers.Layer):
     def __init__(self,units,activation):
         super(Perceptron_Layer, self).__init__()
         self.units = units
+        if activation == "MetaActivationLayer":
+            activation = MetaActivationLayer()
         self.activation = activation
-        self.dense = tf.keras.layers.Dense(self.units,self.activation)
+        self.dense = tf.keras.layers.Dense(self.units,activation=self.activation)
 
     @staticmethod
     def get_name():
@@ -18,7 +21,7 @@ class Perceptron_Layer(tf.keras.layers.Layer):
     def get_layer_hyperparemeters():
         return {
             "hyperparameter_units": [8, 256],
-            "hyperparameter_activation": ["gelu", "softsign", "softmax"]
+            "hyperparameter_activation": ["gelu", "softsign", "softmax","MetaActivationLayer"]
         }
     def build(self, input_shape):
         if isinstance(input_shape,list):
@@ -46,5 +49,10 @@ if __name__ == "__main__":
 
     perceptron_layer = Perceptron_Layer(units=20, activation=tf.keras.activations.gelu)
     output = perceptron_layer(tensor_4)
+
+    perceptron_layer = Perceptron_Layer(units=20, activation="MetaActivationLayer")
+    output = perceptron_layer([tensor_4,None])
+    print("success")
+
 
 
