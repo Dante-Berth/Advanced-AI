@@ -25,3 +25,4 @@ class DimensionalityReductionLayer(tf.keras.layers.Layer):
         reconstructed_tensor = tf.matmul(tf.matmul(u_truncated, tf.linalg.diag(s_truncated)), tf.transpose(v_truncated))
 
         return reconstructed_tensor
+# See in Custom CNN for reducing layers
