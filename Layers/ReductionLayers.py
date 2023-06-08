@@ -1,28 +1,36 @@
 import tensorflow as tf
 
 class DimensionalityReductionLayer(tf.keras.layers.Layer):
-    def __init__(self, energy_threshold=0.95):
+    def __init__(self, r):
         super(DimensionalityReductionLayer, self).__init__()
-        self.energy_threshold = energy_threshold
-
-    def build(self, input_shape):
-        super(DimensionalityReductionLayer, self).build(input_shape)
+        self.r = r
+    @staticmethod
+    def rank_r_approx(s, U, V, r):
+        s_r, U_r, V_r = s[..., :r], U[..., :, :r], V[..., :, :r]
+        A_r = tf.einsum('...s,...us,...vs->...uv', s_r, U_r, V_r)
+        return A_r
 
     def call(self, inputs):
+
         # Perform SVD on the input tensor
-        s, u, v = tf.linalg.svd(inputs)
+        s, U, V = tf.linalg.svd(inputs)
+        return self.rank_r_approx(s,U,V,self.r)
 
-        total_energy = tf.reduce_sum(s ** 2)
-
-        singular_value_energy = s ** 2 / total_energy
-
-        num_singular_values = tf.reduce_sum(tf.cast(tf.cumsum(singular_value_energy) < self.energy_threshold, tf.int32)) + 1
-
-        s_truncated = s[:, :num_singular_values]
-        u_truncated = u[:, :num_singular_values]
-        v_truncated = v[:, :num_singular_values]
-
-        reconstructed_tensor = tf.matmul(tf.matmul(u_truncated, tf.linalg.diag(s_truncated)), tf.transpose(v_truncated))
-
-        return reconstructed_tensor
 # See in Custom CNN for reducing layers
+
+
+if __name__ == "__main__":
+
+
+
+    tensor_3 = tf.random.uniform((12, 24, 36))
+    tensor_4 = tf.random.uniform((12, 24, 36, 48))
+
+
+
+    linalgmonolayer = DimensionalityReductionLayer(50)
+
+    # Pass the input tensor through the layer
+    output = linalgmonolayer(tensor_4)
+    print(output)
+    print(tensor_4)
