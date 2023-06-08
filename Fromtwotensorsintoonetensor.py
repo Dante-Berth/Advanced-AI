@@ -49,7 +49,6 @@ class R_ListTensor(tf.keras.layers.Layer):
             tf.Tensor: Output tensor.
         """
         if len(x)>1 and isinstance(x[1], tf.Tensor):
-            print(x[1])
             x[0], x[1] = self.creator_pad(x[0],x[1])
             y = x[0] + x[1]
         else:
