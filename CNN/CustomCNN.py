@@ -92,7 +92,7 @@ class CNN_Layer(tf.keras.layers.Layer):
         return {
             "hyperparameter_filters": [8, 256],
             "hyperparameter_kernel_size": [1, 10, 1],
-            "hyperparameter_activation": ["gelu", "softsign", "softmax"],
+            "hyperparameter_activation": ["gelu", "softsign", "softmax", "tanh"],
             "hyperparameter_pool_size": [1, 10, 1],
             "hyperparameter_strides": [1, 10, 1],
             "hyperparameter_pooling_layer_name": ["MetaPoolingLayer", "AveragePooling2D", "MaxPooling2D",
