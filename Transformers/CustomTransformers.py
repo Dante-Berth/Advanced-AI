@@ -273,12 +273,12 @@ class R_TransformerEncoderBlock_layer(tf.keras.layers.Layer):
             "hyperparameter_attention_layer": ["MultiHeadAttention", "TalkingHeadsAttention",
                                                "KernelAttention"],
             "hyperparameter_feedforward_layer": ["GatedFeedforward", "None"],
-            "hyperparameter_num_blocks_intermediate": [1, 10, 1],
-            "hyperparameter_num_random_features": [8, 80],
-            "hyperparameter_num_heads": [2, 12, 1],
-            "hyperparameter_inner_dim": [8, 80],
+            "hyperparameter_num_blocks_intermediate": [1, 5, 1],
+            "hyperparameter_num_random_features": [8, 30],
+            "hyperparameter_num_heads": [2, 8, 1],
+            "hyperparameter_inner_dim": [8, 30],
             "hyperparameter_inner_activation": ["sigmoid", "tanh", "MetaActivationLayer", "relu"],
-            "hyperparameter_key_dim": [8, 80]
+            "hyperparameter_key_dim": [8, 30]
 
         }
 

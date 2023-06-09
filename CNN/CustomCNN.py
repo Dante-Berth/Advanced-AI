@@ -90,7 +90,7 @@ class CNN_Layer(tf.keras.layers.Layer):
     @staticmethod
     def get_layer_hyperparemeters():
         return {
-            "hyperparameter_filters": [8, 256],
+            "hyperparameter_filters": [8, 64],
             "hyperparameter_kernel_size": [1, 10, 1],
             "hyperparameter_activation": ["gelu", "softsign", "softmax", "tanh"],
             "hyperparameter_pool_size": [1, 10, 1],
@@ -151,8 +151,8 @@ if __name__=="__main__":
     tensor_4 = tf.ones((12,24,36,48))
     a = CNN_Layer(filters=10, kernel_size=10, activation="gelu", pool_size=10, strides=10, pooling_layer_name="AveragePooling1D")
     print(a(tensor_3))
-    print(CNN_Layer(3, 2, "gelu", 3, 3, "AveragePooling1D")(tensor_4))
-    print(CNN_Layer(3, 2, "gelu", 3, 3, "MetaPoolingLayer")(tensor_4))
+    print(CNN_Layer(40, 2, "gelu", 40, 40, "AveragePooling1D")(tensor_4))
+    print(CNN_Layer(40, 2, "gelu", 3, 3, "MetaPoolingLayer")(tensor_4))
     print(CNN_Layer(3, 2, "gelu", 3, 3, "MetaPoolingLayer")([tensor_4,tensor_3]))
     print(CNN_Layer(3, 2, "gelu", 3, 3, "MetaPoolingLayer")([tensor_3, tensor_3]))
 
