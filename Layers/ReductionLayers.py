@@ -59,7 +59,7 @@ class ReductionLayerPooling(tf.keras.layers.Layer):
             self.R_ListTensor = R_ListTensor()
             input_shape = self.R_ListTensor.get_output_shape(input_shape)
 
-        self.pool_size = max(input_shape[1] * self.ratio_pool_size // 10,1)
+        self.pool_size = max(min(max(input_shape[1] * self.ratio_pool_size // 10,1),input_shape[-2]-1),1)
         self.strides = max(input_shape[2] * self.ratio_strides // 10,1)
 
         if self.pooling_layer_name == "MetaPoolingLayer":
@@ -79,9 +79,9 @@ class ReductionLayerPooling(tf.keras.layers.Layer):
             self.pooling_layer = getattr(tf.keras.layers, self.pooling_layer_name)(self.pool_size, self.strides,
                                                                                    padding="valid",
                                                                                    data_format="channels_last")
-        output_shape_pooling_layer = self.pooling_layer.compute_output_shape(input_shape)
 
-        self.dense_layer = tf.keras.layers.Dense(units=input_shape[-1] * self.ratio_dense // 10)
+        output_shape_pooling_layer = self.pooling_layer.compute_output_shape(input_shape)
+        self.dense_layer = tf.keras.layers.Dense(units=max(input_shape[-1] * self.ratio_dense // 10,1))
         self.dense_layer.build(output_shape_pooling_layer)
 
     def call(self, input):
@@ -92,14 +92,14 @@ class ReductionLayerPooling(tf.keras.layers.Layer):
 
 
 if __name__ == "__main__":
-    tensor_3 = tf.random.uniform((12, 24, 36))
-    tensor_4 = tf.random.uniform((12, 24, 36, 48))
+    tensor_3 = tf.random.uniform((12, 42, 8))
+    tensor_4 = tf.random.uniform((12, 28, 8, 28))
     linalgmonolayer = ReductionLayerSVD(2)
 
     # Pass the input tensor through the layer
     output = linalgmonolayer(tensor_4)
     output = linalgmonolayer([tensor_3, tensor_4])
-
-    print(ReductionLayerPooling(2, 2, 4, "AveragePooling1D")(tensor_4).shape)
-    print(ReductionLayerPooling(10, 10, 3, "MetaPoolingLayer")([tensor_3, tensor_3]).shape)
-    print(ReductionLayerPooling(5, 6, 2, "MetaPoolingLayer")([tensor_3, tensor_4]).shape)
+    #print(ReductionLayerPooling(5, 5, 3, "MetaPoolingLayer")([tensor_3, tensor_3]).shape)
+    print("##############################################")
+    print(ReductionLayerPooling(4, 4, 4, "AveragePooling2D")(tensor_3).shape)
+    #print(ReductionLayerPooling(5, 6, 2, "MetaPoolingLayer")([tensor_3, tensor_4]).shape)

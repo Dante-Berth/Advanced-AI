@@ -140,6 +140,7 @@ class CNN_Layer(tf.keras.layers.Layer):
     def call(self, input, **kwargs):
         if isinstance(input,list):
             input = self.R_ListTensor.call(input)
+
         x = self.cn_layer(input)
         x = self.batch_norm_1(x)
         x = self.activation(x)

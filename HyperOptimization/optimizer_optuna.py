@@ -9,6 +9,7 @@ from RNN.CustomRNN import RNN_Layer, R_RNN_Layer, Reshape_Layer_3D
 from Transformers.CustomTransformers import TransformerEncoderBlock_layer, R_TransformerEncoderBlock_layer
 from Layers.CustomLayers import SignalLayer, LinalgMonolayer
 from Fromtwotensorsintoonetensor import R_ListTensor
+from Layers.ReductionLayers import ReductionLayerSVD,ReductionLayerPooling
 import tensorflow as tf
 import tensorflow_addons as tfa
 from Optimizers.CustomOptimizer import AdaBelief_optimizer
@@ -139,6 +140,21 @@ class final_layer:
         else:
             return R_RNN_Layer(*loop_initializer(R_RNN_Layer, trial, i, j))(x)
 
+
+    @staticmethod
+    def ReductionLayerSVD(trial, i, j, x, y=None):
+        if y is not None:
+            return ReductionLayerSVD(*loop_initializer(ReductionLayerSVD, trial, i, j))([x, y])
+        else:
+            return ReductionLayerSVD(*loop_initializer(ReductionLayerSVD, trial, i, j))(x)
+
+    @staticmethod
+    def ReductionLayerPooling(trial, i, j, x, y=None):
+        if y is not None:
+            return ReductionLayerPooling(*loop_initializer(ReductionLayerPooling, trial, i, j))([x, y])
+        else:
+            return ReductionLayerPooling(*loop_initializer(ReductionLayerPooling, trial, i, j))(x)
+
     @staticmethod
     def Fourrier(trial, i, j, x, y=None):
         if y is not None:
@@ -160,15 +176,37 @@ class final_layer:
         else:
             return x
 
+
     @staticmethod
-    def weighted_layer(trial,i,j,x,y=None):
-        name_layer = trial.suggest_categorical(f"weighted_layer_{i}_{j}", ["Transformer", "RNN","MLP","RNN"])
+    def weighted_layer(trial, i, j, x, y=None, only_layers=None):
+        if only_layers is None:
+            only_layers = ["Transformer", "RNN", "MLP", "CNN"]
+        if len(only_layers) == 1:
+            name_layer = only_layers[0]
+        else:
+            name_layer = trial.suggest_categorical(f"weighted_layer_{i}_{j}", only_layers)
         z = getattr(final_layer,name_layer)(trial,i,j,x,y)
         return z
 
     @staticmethod
-    def unweighted_layer(trial, i, j, x, y=None):
-        name_layer = trial.suggest_categorical(f"unweighted_layer_{i}_{j}", ["Fourrier", "Linalg"])
+    def unweighted_layer(trial, i, j, x, y=None, only_layers=None):
+        if only_layers is None:
+            only_layers = ["Fourrier", "Linalg"]
+        if len(only_layers)==1:
+            name_layer = only_layers[0]
+        else:
+            name_layer = trial.suggest_categorical(f"unweighted_layer_{i}_{j}", only_layers)
+        z = getattr(final_layer, name_layer)(trial, i, j, x, y)
+        return z
+    @staticmethod
+    def reduction_layer(trial, i, j, x, y=None, only_reduction_layers=None):
+        if only_reduction_layers is None:
+            only_reduction_layers = ["ReductionLayerSVD", "ReductionLayerPooling"]
+
+        if len(only_reduction_layers)==1:
+            name_layer = only_reduction_layers[0]
+        else:
+            name_layer = trial.suggest_categorical(f"reduction_layer_{i}_{j}", only_reduction_layers)
         z = getattr(final_layer, name_layer)(trial, i, j, x, y)
         return z
 
@@ -178,7 +216,7 @@ class final_layer:
 
 class loop_final_layer:
     @staticmethod
-    def layer_loop(trial, i, j, x, list_y=None):
+    def layer_loop(trial, i, j, x, list_y=None, only_layers=None):
         """
 
         :param trial: trial object
@@ -207,7 +245,8 @@ class loop_final_layer:
                 else:
                     index_list_y = -1
 
-                x = final_layer.weighted_layer(trial, i+num_layer, j, x, list_y[index_list_y])
+                x = final_layer.weighted_layer(trial, i+num_layer, j, x, list_y[index_list_y],only_layers)
+                x = final_layer.reduction_layer(trial, i+num_layer, j, x, list_y[index_list_y],only_reduction_layers=["ReductionLayerPooling"])
 
                 list_outputs.append(x)
 
@@ -215,14 +254,14 @@ class loop_final_layer:
             return list_outputs
 
     @staticmethod
-    def unweighted_layer_list_tensors(trial,i,j,list_tensors):
+    def unweighted_layer_list_tensors(trial,i,j,list_tensors,only_layers=None):
         list_outputs = []
         for k in range(len(list_tensors)):
             tensor = list_tensors[k]
             list_outputs.append(tensor)
             bool = trial.suggest_int(f"bool_unweighted_layer_{i}_{j+k}",0,1,step=1)
             if bool:
-                list_outputs.append(final_layer.unweighted_layer(trial,i,j+k,tensor))
+                list_outputs.append(final_layer.unweighted_layer(trial,i,j+k,tensor,only_layers))
         del list_tensors
         return list_outputs
 
@@ -230,16 +269,16 @@ class loop_final_layer:
 
 
 
-def objective(trial,x_train=x_train,y_train=y_train,x_test=x_test,y_test=y_test,width=10, depth=10):
+def objective(trial,x_train=x_train[:30],y_train=y_train[:30],x_test=x_test[:30],y_test=y_test[:30],width=10, depth=10):
 
     input_layer = tf.keras.layers.Input(shape=(28, 28, 1))
 
     dictionnary = {}
     width = 1
     depth = 1
-    x = loop_final_layer.unweighted_layer_list_tensors(trial,1,1,input_layer)
-    x = loop_final_layer.layer_loop(trial,1,1,x[-1],x)
-    x = loop_final_layer.layer_loop(trial, 1, 1, x[-1],x)
+    x = loop_final_layer.unweighted_layer_list_tensors(trial,1,1,[input_layer])
+    x = loop_final_layer.layer_loop(trial,1,1,x[-1],x,only_layers=["CNN","Transformer","MLP"])
+    x = loop_final_layer.layer_loop(trial, 1, 1, x[-1],x,only_layers=["CNN"])
 
 
 

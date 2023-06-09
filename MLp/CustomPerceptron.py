@@ -20,7 +20,7 @@ class Perceptron_Layer(tf.keras.layers.Layer):
     @staticmethod
     def get_layer_hyperparemeters():
         return {
-            "hyperparameter_units": [8, 256],
+            "hyperparameter_units": [8, 128],
             "hyperparameter_activation": ["gelu", "softsign", "softmax","MetaActivationLayer"]
         }
     def build(self, input_shape):
