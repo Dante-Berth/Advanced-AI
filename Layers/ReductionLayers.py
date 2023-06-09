@@ -9,13 +9,24 @@ class ReductionLayerSVD(tf.keras.layers.Layer):
         self.r = r
 
     @staticmethod
+    def get_name():
+        return "reduction_svd"
+    @staticmethod
+    def get_layer_hyperparemeters():
+        return {
+            "hyperparameter_r": [1, 10, 1]
+        }
+
+    @staticmethod
     def rank_r_approx(s, U, V, r):
+
         s_r, U_r, V_r = s[..., :r], U[..., :, :r], V[..., :, :r]
         A_r = tf.einsum('...s,...us,...vs->...uv', s_r, U_r, V_r)
         return A_r
 
     def call(self, inputs):
-        # Perform SVD on the input tensor
+        if isinstance(inputs, list):
+            inputs = R_ListTensor()(inputs)
         s, U, V = tf.linalg.svd(inputs)
         return self.rank_r_approx(s, U, V, self.r)
 
@@ -30,7 +41,11 @@ class ReductionLayerPooling(tf.keras.layers.Layer):
         self.pooling_layer = None
 
     @staticmethod
-    def get_layer_hyperparameters():
+    def get_name():
+        return "reduction_layer_pooling"
+
+    @staticmethod
+    def get_layer_hyperparemeters():
         return {
             "hyperparameter_ratio_pool_size": [1, 3, 1],
             "hyperparameter_ratio_strides": [1, 3, 1],
@@ -44,8 +59,8 @@ class ReductionLayerPooling(tf.keras.layers.Layer):
             self.R_ListTensor = R_ListTensor()
             input_shape = self.R_ListTensor.get_output_shape(input_shape)
 
-        self.pool_size = input_shape[1] * self.ratio_pool_size // 10
-        self.strides = input_shape[2] * self.ratio_strides // 10
+        self.pool_size = max(input_shape[1] * self.ratio_pool_size // 10,1)
+        self.strides = max(input_shape[2] * self.ratio_strides // 10,1)
 
         if self.pooling_layer_name == "MetaPoolingLayer":
             self.pooling_layer = MetaPoolingLayer(self.pool_size, self.strides)
@@ -79,10 +94,11 @@ class ReductionLayerPooling(tf.keras.layers.Layer):
 if __name__ == "__main__":
     tensor_3 = tf.random.uniform((12, 24, 36))
     tensor_4 = tf.random.uniform((12, 24, 36, 48))
-    linalgmonolayer = ReductionLayerSVD(50)
+    linalgmonolayer = ReductionLayerSVD(2)
 
     # Pass the input tensor through the layer
     output = linalgmonolayer(tensor_4)
+    output = linalgmonolayer([tensor_3, tensor_4])
 
     print(ReductionLayerPooling(2, 2, 4, "AveragePooling1D")(tensor_4).shape)
     print(ReductionLayerPooling(10, 10, 3, "MetaPoolingLayer")([tensor_3, tensor_3]).shape)
