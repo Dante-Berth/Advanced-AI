@@ -1,5 +1,4 @@
 import random
-import tensorflow_models as tfm
 import optuna
 import importlib.util
 import tensorflow as tf
@@ -292,14 +291,19 @@ def objective(trial,x_train=x_train[:30],y_train=y_train[:30],x_test=x_test[:30]
     model = tf.keras.models.Model(inputs=input_layer, outputs=output)
 
     #ranger = AdaBelief_optimizer.init(*(loop_initializer(AdaBelief_optimizer, trial, -1, -1) + [32, 1000]))
+
+    #Optimizer part
     learning_rate = int(trial.suggest_categorical("learning_rate",["0.1","0.5","1","5","10","50","100","200","500","1000"]))*1e-4
     use_ema = trial.suggest_categorical("use_ema",[True,False])
     clip_norm = int(trial.suggest_categorical("clip_norm",["1","5","10","50"]))*0.1
     clip_value = int(trial.suggest_categorical("clip_value",["1","5","10","50"]))*0.1
     ema_momentum = trial.suggest_float('ema_momentum', 0.9, 0.99)
     ema_overwrite_frequency = trial.suggest_int('ema_overwrite_frequency', 1, 100,5)*10
+    decay_steps = int(trial.suggest_categorical("learning_rate",["10","50","100","200","500","1000","10000"]))
+    lr_schedule = tf.keras.experimental.CosineDecay(
+        learning_rate, decay_steps)
 
-    ranger = tf.keras.optimizers.Lion(learning_rate=learning_rate, use_ema=use_ema, clip_norm=clip_norm, clip_value=clip_value,ema_momentum=ema_momentum, ema_overwrite_frequency=ema_overwrite_frequency)
+    ranger = tf.keras.optimizers.Adam(learning_rate=lr_schedule, use_ema=use_ema, clip_norm=clip_norm, clip_value=clip_value,ema_momentum=ema_momentum, ema_overwrite_frequency=ema_overwrite_frequency)
 
     model.compile(
         optimizer=ranger,
