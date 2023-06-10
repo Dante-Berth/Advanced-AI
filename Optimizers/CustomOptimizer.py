@@ -1,20 +1,5 @@
 import tensorflow as tf
 import tensorflow_addons as tfa
-
-BATCH_SIZE = 64
-EPOCHS = 10
-INIT_LR = 1e-4
-MAX_LR = 1e-2
-
-steps_per_epoch = 10000 // BATCH_SIZE
-clr = tfa.optimizers.CyclicalLearningRate(initial_learning_rate=INIT_LR,
-                                          maximal_learning_rate=MAX_LR,
-                                          scale_fn=lambda x: 1 / (2. ** (x - 1)),
-                                          step_size=2 * steps_per_epoch
-                                          )
-optimizer = tf.keras.optimizers.SGD(clr)
-
-
 class AdaBelief_optimizer:
     @staticmethod
     def get_name():

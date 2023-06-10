@@ -10,8 +10,6 @@ from Layers.CustomLayers import SignalLayer, LinalgMonolayer
 from Fromtwotensorsintoonetensor import R_ListTensor
 from Layers.ReductionLayers import ReductionLayerSVD,ReductionLayerPooling
 import tensorflow as tf
-import tensorflow_addons as tfa
-from Optimizers.CustomOptimizer import AdaBelief_optimizer
 # Load the MNIST dataset
 (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
 
@@ -290,7 +288,6 @@ def objective(trial,x_train=x_train[:30],y_train=y_train[:30],x_test=x_test[:30]
 
     model = tf.keras.models.Model(inputs=input_layer, outputs=output)
 
-    #ranger = AdaBelief_optimizer.init(*(loop_initializer(AdaBelief_optimizer, trial, -1, -1) + [32, 1000]))
 
     #Optimizer part
     learning_rate = int(trial.suggest_categorical("learning_rate",["0.1","0.5","1","5","10","50","100","200","500","1000"]))*1e-4

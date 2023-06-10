@@ -2,7 +2,6 @@ import tensorflow as tf
 import tensorflow_models as tfm
 from official.modeling import tf_utils
 from Activation.CustomActivationLayers import MetaActivationLayer
-from official.nlp.modeling.layers import util
 
 
 class Reshape_Layer_3D(tf.keras.layers.Layer):
