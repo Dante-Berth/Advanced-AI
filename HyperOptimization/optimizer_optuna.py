@@ -5,7 +5,7 @@ import tensorflow as tf
 from CNN.CustomCNN import CNN_Layer
 from MLP.CustomPerceptron import Perceptron_Layer
 from RNN.CustomRNN import RNN_Layer, R_RNN_Layer, Reshape_Layer_3D
-from Transformers.CustomTransformers import TransformerEncoderBlock_layer, R_TransformerEncoderBlock_layer
+#from Transformers.CustomTransformers import TransformerEncoderBlock_layer, R_TransformerEncoderBlock_layer
 from Layers.CustomLayers import SignalLayer, LinalgMonolayer
 from Fromtwotensorsintoonetensor import R_ListTensor
 from Layers.ReductionLayers import ReductionLayerSVD,ReductionLayerPooling
@@ -112,12 +112,12 @@ class final_layer:
     there are two components, the first one is dedicated to the weighted layers while the second one referred to \
     to unweighted layers which are important for any unusual Deep Learning transformations.
     """
-    @staticmethod
-    def Transformer(trial,i,j,x,y=None):
-        if y is not None:
-            return R_TransformerEncoderBlock_layer(*loop_initializer(R_TransformerEncoderBlock_layer, trial, i, j))([x,y])
-        else:
-            return R_TransformerEncoderBlock_layer(*loop_initializer(R_TransformerEncoderBlock_layer, trial, i, j))([x,x])
+    #@staticmethod
+    #def Transformer(trial,i,j,x,y=None):
+    #    if y is not None:
+    #        return R_TransformerEncoderBlock_layer(*loop_initializer(R_TransformerEncoderBlock_layer, trial, i, j))([x,y])
+    #    else:
+    #        return R_TransformerEncoderBlock_layer(*loop_initializer(R_TransformerEncoderBlock_layer, trial, i, j))([x,x])
     @staticmethod
     def CNN(trial,i,j,x,y=None):
         if y is not None:
@@ -177,7 +177,7 @@ class final_layer:
     @staticmethod
     def weighted_layer(trial, i, j, x, y=None, only_layers=None):
         if only_layers is None:
-            only_layers = ["Transformer", "RNN", "MLP", "CNN"]
+            only_layers = ["RNN", "MLP", "CNN"] #["Transformer", "RNN", "MLP", "CNN"]
         if len(only_layers) == 1:
             name_layer = only_layers[0]
         else:
@@ -274,7 +274,7 @@ def objective(trial,x_train=x_train[:30],y_train=y_train[:30],x_test=x_test[:30]
     width = 1
     depth = 1
     x = loop_final_layer.unweighted_layer_list_tensors(trial,1,1,[input_layer])
-    x = loop_final_layer.layer_loop(trial,1,1,x[-1],x,only_layers=["CNN","Transformer","MLP"])
+    x = loop_final_layer.layer_loop(trial,1,1,x[-1],x,only_layers=["CNN","MLP"])
     x = loop_final_layer.layer_loop(trial, 1, 1, x[-1],x,only_layers=["CNN"])
 
 
@@ -290,17 +290,21 @@ def objective(trial,x_train=x_train[:30],y_train=y_train[:30],x_test=x_test[:30]
 
 
     #Optimizer part
-    learning_rate = int(trial.suggest_categorical("learning_rate",["0.1","0.5","1","5","10","50","100","200","500","1000"]))*1e-4
-    use_ema = trial.suggest_categorical("use_ema",[True,False])
-    clip_norm = int(trial.suggest_categorical("clip_norm",["1","5","10","50"]))*0.1
-    clip_value = int(trial.suggest_categorical("clip_value",["1","5","10","50"]))*0.1
+    hyperparameters = {
+        "learning_rate" : ["0.1", "0.5", "1", "5", "10", "50", "100", "200", "500", "1000"],
+        "use_ema" : ["1","5","10","50"],
+        "decay_steps": ["10", "50", "100", "200", "500", "1000", "10000"]
+
+    }
+    learning_rate = float(trial.suggest_categorical("learning_rate",hyperparameters["learning_rate"]))*1e-4
+    use_ema = trial.suggest_categorical("use_ema",hyperparameters["use_ema"])
     ema_momentum = trial.suggest_float('ema_momentum', 0.9, 0.99)
     ema_overwrite_frequency = trial.suggest_int('ema_overwrite_frequency', 1, 100,5)*10
-    decay_steps = int(trial.suggest_categorical("learning_rate",["10","50","100","200","500","1000","10000"]))
-    lr_schedule = tf.keras.experimental.CosineDecay(
-        learning_rate, decay_steps)
+    decay_steps = int(trial.suggest_categorical("decay_steps",hyperparameters["decay_steps"]))
 
-    ranger = tf.keras.optimizers.Adam(learning_rate=lr_schedule, use_ema=use_ema, clip_norm=clip_norm, clip_value=clip_value,ema_momentum=ema_momentum, ema_overwrite_frequency=ema_overwrite_frequency)
+    lr_schedule = tf.keras.optimizers.schedules.CosineDecay(initial_learning_rate = learning_rate, decay_steps = decay_steps)
+
+    ranger = tf.keras.optimizers.Adam(learning_rate=lr_schedule, use_ema=use_ema,ema_momentum=ema_momentum, ema_overwrite_frequency=ema_overwrite_frequency)
 
     model.compile(
         optimizer=ranger,

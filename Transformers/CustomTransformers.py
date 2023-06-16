@@ -1,7 +1,7 @@
 import tensorflow as tf
-import tensorflow_models as tfm
+import official.nlp.keras_nlp.layers as nlp_layers
 from official.modeling import tf_utils
-from Activation.CustomActivationLayers import MetaActivationLayer
+# from Activation.CustomActivationLayers import MetaActivationLayer
 
 
 class Reshape_Layer_3D(tf.keras.layers.Layer):
@@ -69,7 +69,7 @@ class LearnedPositionalEncoding(tf.keras.layers.Layer):
         return tf.concat([x, self.positional_encoding(x)], axis=-1)
 
 
-class TransformerEncoderBlock_layer(tfm.nlp.layers.TransformerEncoderBlock):
+class TransformerEncoderBlock_layer(nlp_layers.TransformerEncoderBlock):
     """
     A custom implementation of the Transformer encoder block in TensorFlow NLP library.
 
@@ -89,7 +89,7 @@ class TransformerEncoderBlock_layer(tfm.nlp.layers.TransformerEncoderBlock):
         """
 
     def __init__(self, attention_layer: str, feedforward_layer: str, num_random_features=256,
-                 num_blocks_intermediate=2, num_heads=8, inner_dim=42, inner_activation="gelu", key_dim=32):
+                 num_blocks_intermediate=2, num_heads=8, inner_dim=42, inner_activation="gelu"):
         """
         Initializes the CustomTransformerEncoderBlock.
 
@@ -119,14 +119,14 @@ class TransformerEncoderBlock_layer(tfm.nlp.layers.TransformerEncoderBlock):
         self.num_heads = num_heads
         self.inner_dim = inner_dim
         self.inner_activation = inner_activation
-        self.key_dim = key_dim
         self.feature_transform = "exp"
         self.layernorm = tf.keras.layers.LayerNormalization()
+        if inner_dim % num_heads != 0:
+            self.inner_dim = (inner_dim // num_heads) * num_heads
 
         super(TransformerEncoderBlock_layer, self).__init__(num_attention_heads=self.num_heads,
                                                             inner_dim=self.inner_dim,
-                                                            inner_activation=self.inner_activation,
-                                                            key_dim=self.key_dim)
+                                                            inner_activation=self.inner_activation)
 
     @staticmethod
     def get_name():
@@ -142,8 +142,7 @@ class TransformerEncoderBlock_layer(tfm.nlp.layers.TransformerEncoderBlock):
             "hyperparameter_num_random_features": [8, 80],
             "hyperparameter_num_heads": [2, 12, 1],
             "hyperparameter_inner_dim": [8, 80],
-            "hyperparameter_inner_activation": ["sigmoid", "tanh", "MetaActivationLayer", "relu"],
-            "hyperparameter_key_dim": [8, 80]
+            "hyperparameter_inner_activation": ["sigmoid", "tanh", "MetaActivationLayer", "relu"]
 
         }
 
@@ -164,9 +163,9 @@ class TransformerEncoderBlock_layer(tfm.nlp.layers.TransformerEncoderBlock):
         """
         super(TransformerEncoderBlock_layer, self).build(input_shape)
         if self.attention_layer in ["MultiHeadAttention", "TalkingHeadsAttention"]:
-            self._attention_layer = getattr(tfm.nlp.layers, self.attention_layer)(
+            self._attention_layer = getattr(nlp_layers, self.attention_layer)(
                 num_heads=self._num_heads,
-                key_dim=self._key_dim,
+                key_dim=self._attention_head_size,
                 value_dim=self._value_dim,
                 dropout=self._attention_dropout_rate,
                 use_bias=self._use_bias,
@@ -177,9 +176,9 @@ class TransformerEncoderBlock_layer(tfm.nlp.layers.TransformerEncoderBlock):
                 name=f"{self.attention_layer}_attention")
 
         elif self.attention_layer == "KernelAttention":
-            self._attention_layer = tfm.nlp.layers.KernelAttention(
+            self._attention_layer = nlp_layers.layers.KernelAttention(
                 num_heads=self._num_heads,
-                key_dim=self._key_dim,
+                key_dim=self._attention_head_size,
                 value_dim=self._value_dim,
                 dropout=self._attention_dropout_rate,
                 use_bias=self._use_bias,
@@ -214,22 +213,21 @@ class TransformerEncoderBlock_layer(tfm.nlp.layers.TransformerEncoderBlock):
             einsum_equation = "...bc,cd->...bd"
         hidden_size = input_tensor_shape[-1]
 
-        if self._key_dim is None:
-            self._key_dim = int(hidden_size // self._num_heads)
+    
         if self._output_last_dim is None:
             last_output_shape = hidden_size
         else:
             last_output_shape = self._output_last_dim
 
         if self.feedforward_layer == "GatedFeedforward":
-            self._intermediate_dense = getattr(tfm.nlp.layers, self.feedforward_layer)(
+            self._intermediate_dense = getattr(nlp_layers, self.feedforward_layer)(
                 inner_dim=self._inner_dim,
                 inner_activation=self._inner_activation,
                 dropout=self._output_dropout_rate,
                 num_blocks=self.num_blocks_intermediate
             )
 
-            self._output_dense = getattr(tfm.nlp.layers, self.feedforward_layer)(
+            self._output_dense = getattr(nlp_layers, self.feedforward_layer)(
                 inner_dim=last_output_shape,
                 inner_activation=self._inner_activation,
                 dropout=self._output_dropout_rate,
@@ -254,13 +252,13 @@ class R_TransformerEncoderBlock_layer(tf.keras.layers.Layer):
     R_TransformerEncoderBlock_layer is TransformerEncoderBlock_layer where can handle 1D lenght vector (takes [tf.Tensor] or [tf.Tensor,tf.Tensor]
     """
     def __init__(self, attention_layer, feedforward_layer, num_random_features,
-                 num_blocks_intermediate, num_heads, inner_dim, inner_activation, key_dim):
+                 num_blocks_intermediate, num_heads, inner_dim, inner_activation):
         super(R_TransformerEncoderBlock_layer, self).__init__()
         if inner_activation == "MetaActivationLayer":
             inner_activation = MetaActivationLayer()
         self.transformer = TransformerEncoderBlock_layer(attention_layer, feedforward_layer, num_random_features,
                                                          num_blocks_intermediate, num_heads, inner_dim,
-                                                         inner_activation, key_dim)
+                                                         inner_activation)
 
     @staticmethod
     def get_name():
@@ -276,8 +274,7 @@ class R_TransformerEncoderBlock_layer(tf.keras.layers.Layer):
             "hyperparameter_num_random_features": [8, 30],
             "hyperparameter_num_heads": [2, 8, 1],
             "hyperparameter_inner_dim": [8, 30],
-            "hyperparameter_inner_activation": ["sigmoid", "tanh", "MetaActivationLayer", "relu"],
-            "hyperparameter_key_dim": [8, 30]
+            "hyperparameter_inner_activation": ["sigmoid", "tanh", "MetaActivationLayer", "relu"]
 
         }
 
@@ -312,22 +309,20 @@ if __name__ == "__main__":
     custom_transformer_block = TransformerEncoderBlock_layer(
         attention_layer="MultiHeadAttention",
         feedforward_layer="GatedFeedforward",
-        inner_activation=MetaActivationLayer(),
-        num_heads=4,
-        key_dim=12,
-        inner_dim=8
+        inner_activation="selu",
+        num_heads=8,
+        inner_dim=40
     )
 
-    tensor_123 = tf.ones((4, 5, 6, 7))
+    tensor_123 = tf.ones((4, 5, 5, 8))
     tensor_456 = tf.ones((4, 5, 6, 7))
     R_TransformerEncoderBlock_layer(attention_layer="MultiHeadAttention",
         feedforward_layer="GatedFeedforward", num_random_features=256,
-                 num_blocks_intermediate=2, num_heads=8, inner_dim=42, inner_activation="gelu", key_dim=32)([tensor_123, None])
-
+                 num_blocks_intermediate=2, num_heads=8, inner_dim=40, inner_activation="gelu")([tensor_123, None])
+    exit()
     R_TransformerEncoderBlock_layer(attention_layer="MultiHeadAttention",
                                     feedforward_layer="GatedFeedforward", num_random_features=256,
-                                    num_blocks_intermediate=2, num_heads=8, inner_dim=42, inner_activation="gelu",
-                                    key_dim=32)([tensor_123,None])
+                                    num_blocks_intermediate=2, num_heads=8, inner_dim=40, inner_activation="gelu")([tensor_123,None])
     print("okay")
     # Instantiate the custom TransformerEncoderBlock with the custom layers
     custom_transformer_block = TransformerEncoderBlock_layer(
@@ -338,6 +333,5 @@ if __name__ == "__main__":
     tensor_34 = tf.ones((48, 12, 38,48))
     R_TransformerEncoderBlock_layer(attention_layer="MultiHeadAttention",
                                     feedforward_layer="GatedFeedforward", num_random_features=256,
-                                    num_blocks_intermediate=2, num_heads=8, inner_dim=42, inner_activation="gelu",
-                                    key_dim=32)([tensor_3, tensor_34])
+                                    num_blocks_intermediate=2, num_heads=8, inner_dim=40, inner_activation="gelu")([tensor_3, tensor_34])
     print("success")
