@@ -1,4 +1,4 @@
-#AutoDL - Automated Deep Learning
+## AutoDL - Automated Deep Learning
 AutoDL is a repository that automates the process of deep learning model selection, architecture search, and hyperparameter tuning using a Bayesian optimizer. It aims to find the best deep learning model for a given task by efficiently exploring the search space of different architectures and hyperparameters.
 
 ## Features
