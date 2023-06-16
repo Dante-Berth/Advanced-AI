@@ -3,6 +3,7 @@ Custom my account **Done**
 Custom create a export a program **Done** ( it was the just the .gitingore)
 Custom different Transformers architectures by modifing the self.architecture :
 	- Tensorflow by tfm **Done**
+
 Custom CNN layers **Done**
 Custom MLP layers **Done**
 Custom RNN layers **Done**
@@ -23,5 +24,6 @@ Create a function for saving the best model according to validation loss **To Do
 
 Improve the code **To Do**
 
+**Create Custom Transformers because tfm is not working anymore**
 
 Then after succeeding, should launch on our financial data. Then the Neural network would be better than the previous one and we could propose the next AI version to our customers.
