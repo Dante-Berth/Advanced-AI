@@ -51,6 +51,7 @@ class R_ListTensor(tf.keras.layers.Layer):
         """
         if len(x)>1 and isinstance(x[1], tf.Tensor):
             if self.two_vectors:
+                x[0], x[1] = self.creator_pad(x[0], x[1])
                 y = [x[0],x[1]]
             else:
                 x[0], x[1] = self.creator_pad(x[0],x[1])
@@ -127,4 +128,6 @@ if __name__=="__main__":
     vector_2 = tf.ones(shape=(10,8,14))
     print(R_ListTensor()([vector_1, vector_2]))
     #print(R_ListTensor()([vector_1]))
+    multi_head_attention_layer = tf.keras.layers.MultiHeadAttention(num_heads = 2, value_dim=8, key_dim=5)
+    print(multi_head_attention_layer(*R_ListTensor(two_vectors=True)([vector_1, vector_2])))
 
