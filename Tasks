@@ -20,6 +20,8 @@ Create **Done**
 
 After succeeding all these tasks, create a meta architecture **To be improved**
 
+Testing the mutlihead attention with optimizer_optuna.py
+
 Create a function for saving the best model according to validation loss **To Do**
 
 Improve the code **To Do**

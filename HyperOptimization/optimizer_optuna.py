@@ -8,9 +8,11 @@ from RNN.CustomRNN import RNN_Layer, R_RNN_Layer, Reshape_Layer_3D
 #from Transformers.CustomTransformers import TransformerEncoderBlock_layer, R_TransformerEncoderBlock_layer
 from Layers.CustomLayers import SignalLayer, LinalgMonolayer
 from Fromtwotensorsintoonetensor import R_ListTensor
+from Transformers.CustomMultiHeadAttention import MultiHeadAttention_Layer
 from Layers.ReductionLayers import ReductionLayerSVD,ReductionLayerPooling
 import tensorflow as tf
 # Load the MNIST dataset
+# Adding a new layer called MultiHeadAttention
 (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
 
 # Normalize pixel values between 0 and 1
@@ -137,6 +139,12 @@ class final_layer:
         else:
             return R_RNN_Layer(*loop_initializer(R_RNN_Layer, trial, i, j))(x)
 
+    @staticmethod
+    def MHA(trial, i, j, x, y=None): #MultiHeadAttention
+        if y is not None:
+            return MultiHeadAttention_Layer(*loop_initializer(MultiHeadAttention_Layer, trial, i, j))([x, y])
+        else:
+            return MultiHeadAttention_Layer(*loop_initializer(MultiHeadAttention_Layer, trial, i, j))(x)
 
     @staticmethod
     def ReductionLayerSVD(trial, i, j, x, y=None):
@@ -177,7 +185,7 @@ class final_layer:
     @staticmethod
     def weighted_layer(trial, i, j, x, y=None, only_layers=None):
         if only_layers is None:
-            only_layers = ["RNN", "MLP", "CNN"] #["Transformer", "RNN", "MLP", "CNN"]
+            only_layers = ["RNN", "MLP", "CNN", "MHA"] #["Transformer", "RNN", "MLP", "CNN"]
         if len(only_layers) == 1:
             name_layer = only_layers[0]
         else:
