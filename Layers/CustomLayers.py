@@ -69,7 +69,7 @@ class LinalgMonolayer(tf.keras.layers.Layer):
     @staticmethod
     def get_layer_hyperparemeters():
         return {
-            "hyperparameter_linalg_mono_functions": ['adjoint', 'l2_normalize',  'matrix_transpose', 'normalize', 'qr', 'svd']
+            "hyperparameter_linalg_mono_functions": ['l2_normalize',  'matrix_transpose', 'normalize', 'qr', 'svd']
         }
     def build(self, input_shape):
         if isinstance(input_shape,list):

@@ -282,7 +282,7 @@ def objective(trial,x_train=x_train[:30],y_train=y_train[:30],x_test=x_test[:30]
     width = 1
     depth = 1
     x = loop_final_layer.unweighted_layer_list_tensors(trial,1,1,[input_layer])
-    x = loop_final_layer.layer_loop(trial,1,1,x[-1],x,only_layers=["CNN","MLP"])
+    x = loop_final_layer.layer_loop(trial,1,1,x[-1],x,only_layers=["CNN","MLP","MHA"])
     x = loop_final_layer.layer_loop(trial, 1, 1, x[-1],x,only_layers=["CNN"])
 
 
