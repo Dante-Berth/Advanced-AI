@@ -3,12 +3,13 @@ class R_ListTensor(tf.keras.layers.Layer):
     """
     Custom Keras layer that performs element-wise addition of tensors with optional padding.
     """
-    def __init__(self):
+    def __init__(self,two_vectors=False):
         """
         Initializes a new instance of the R_ListTensor layer.
         """
         super(R_ListTensor, self).__init__()
         self.instance_padding = True
+        self.two_vectors = two_vectors
 
     @staticmethod
     def get_output_shape(input_shape):
@@ -49,8 +50,11 @@ class R_ListTensor(tf.keras.layers.Layer):
             tf.Tensor: Output tensor.
         """
         if len(x)>1 and isinstance(x[1], tf.Tensor):
-            x[0], x[1] = self.creator_pad(x[0],x[1])
-            y = x[0] + x[1]
+            if self.two_vectors:
+                y = [x[0],x[1]]
+            else:
+                x[0], x[1] = self.creator_pad(x[0],x[1])
+                y = x[0] + x[1]
         else:
             y = x[0]
         return y
@@ -122,5 +126,5 @@ if __name__=="__main__":
     vector_1 = tf.ones(shape=(12, 5, 6,2))
     vector_2 = tf.ones(shape=(10,8,14))
     print(R_ListTensor()([vector_1, vector_2]))
-    print(R_ListTensor()([vector_1]))
+    #print(R_ListTensor()([vector_1]))
 
