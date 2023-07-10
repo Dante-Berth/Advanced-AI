@@ -28,4 +28,6 @@ Improve the code **To Do**
 
 **Create Custom Transformers because tfm is not working anymore** ( adding Transformers architecture ,just test it)
 
+**Find a way to reload models**
+
 Then after succeeding, should launch on our financial data. Then the Neural network would be better than the previous one and we could propose the next AI version to our customers.
