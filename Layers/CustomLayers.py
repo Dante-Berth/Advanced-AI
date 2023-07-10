@@ -28,7 +28,7 @@ def all_combination_list(input_liste):
     return all_combinations
 
 
-
+@tf.keras.utils.register_keras_serializable()
 class LinalgMonolayer(tf.keras.layers.Layer):
     """
     tensor_shape_four = tf.random.uniform((32, 24, 6, 4))

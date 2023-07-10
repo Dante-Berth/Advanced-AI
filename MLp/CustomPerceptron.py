@@ -1,6 +1,7 @@
 import tensorflow as tf
 from Fromtwotensorsintoonetensor import R_ListTensor
 from Activation.CustomActivationLayers import MetaActivationLayer
+@tf.keras.utils.register_keras_serializable()
 class Perceptron_Layer(tf.keras.layers.Layer):
     """
     Perceptron it is exactly like the layer from tensorflow however i added two stasticmethod for hyperoptimization

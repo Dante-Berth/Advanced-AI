@@ -5,7 +5,7 @@ MetaActivationLayer généralise le concept de couche d'activation
 
 
 
-
+@tf.keras.utils.register_keras_serializable()
 class Expcos(tf.keras.layers.Layer):
     """
     Activation function X -> sign(X)*\exp(w_{2}\cos(w_{1}X))
@@ -26,7 +26,7 @@ class Expcos(tf.keras.layers.Layer):
         )
     def call(self, inputs):
         return tf.math.sign(inputs)*tf.math.exp(self.weight_2*tf.math.cos(self.weight_1*inputs))
-
+@tf.keras.utils.register_keras_serializable()
 class Signlog(tf.keras.layers.Layer):
     """
     Activation function from a paper Dreamer but adding a weight for increasing or reducing the input importance
@@ -44,7 +44,7 @@ class Signlog(tf.keras.layers.Layer):
         return tf.math.sign(inputs) * tf.math.log(tf.keras.activations.relu(self.weight)*tf.math.abs(inputs) + 1)
 
 
-
+@tf.keras.utils.register_keras_serializable()
 class MetaActivationLayer(tf.keras.layers.Layer):
     """
     Idea taken from AutoML Springer P.66

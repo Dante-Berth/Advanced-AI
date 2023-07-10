@@ -1,4 +1,5 @@
 import tensorflow as tf
+@tf.keras.utils.register_keras_serializable()
 class R_ListTensor(tf.keras.layers.Layer):
     """
     Custom Keras layer that performs element-wise addition of tensors with optional padding.

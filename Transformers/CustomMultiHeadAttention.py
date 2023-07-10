@@ -1,5 +1,7 @@
 import tensorflow as tf
 from Fromtwotensorsintoonetensor import R_ListTensor
+from tensorflow import keras
+@tf.keras.utils.register_keras_serializable()
 class MultiHeadAttention_Layer(tf.keras.layers.Layer):
     """
     MultiHeadAttention_Layer is the layer reffered to Multi Head Attention

@@ -1,6 +1,6 @@
 import tensorflow as tf
 from Fromtwotensorsintoonetensor import R_ListTensor
-
+@tf.keras.utils.register_keras_serializable()
 class Reshape_Layer_3D(tf.keras.layers.Layer):
     def __init__(self):
         super(Reshape_Layer_3D, self).__init__()
@@ -15,6 +15,7 @@ class Reshape_Layer_3D(tf.keras.layers.Layer):
             return self.reshape(inputs)
         else:
             return inputs
+@tf.keras.utils.register_keras_serializable()
 class RNN_Layer(tf.keras.layers.Layer):
     """
     RNN_layer generalizes the concept of RNN,  can handle input of different size either 3 or either 4
@@ -75,7 +76,7 @@ class RNN_Layer(tf.keras.layers.Layer):
         x = self.reduction_layer_input(inputs)
         x = self.rnn_layer(x)
         return self.reduction_layer_output(x)
-
+@tf.keras.utils.register_keras_serializable()
 class R_RNN_Layer(tf.keras.layers.Layer):
     def __init__(self, rnn_layer, units, dropout, recurrent_dropout,
                  reduction_factor_input, reduction_factor_output):

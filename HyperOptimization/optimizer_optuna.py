@@ -1,10 +1,9 @@
 import random
 import optuna
-import importlib.util
-import tensorflow as tf
+import os
 from CNN.CustomCNN import CNN_Layer
 from MLP.CustomPerceptron import Perceptron_Layer
-from RNN.CustomRNN import RNN_Layer, R_RNN_Layer, Reshape_Layer_3D
+from RNN.CustomRNN import R_RNN_Layer
 #from Transformers.CustomTransformers import TransformerEncoderBlock_layer, R_TransformerEncoderBlock_layer
 from Layers.CustomLayers import SignalLayer, LinalgMonolayer
 from Fromtwotensorsintoonetensor import R_ListTensor
@@ -251,7 +250,7 @@ class loop_final_layer:
                     index_list_y = -1
 
                 x = final_layer.weighted_layer(trial, i+num_layer, j, x, list_y[index_list_y],only_layers)
-                x = final_layer.reduction_layer(trial, i+num_layer, j, x, list_y[index_list_y],only_reduction_layers=["ReductionLayerPooling"])
+                x = final_layer.reduction_layer(trial, i+num_layer, j, x, list_y[index_list_y],only_reduction_layers=["ReductionLayerSVD"])
 
                 list_outputs.append(x)
 
@@ -282,8 +281,8 @@ def objective(trial,x_train=x_train[:30],y_train=y_train[:30],x_test=x_test[:30]
     width = 1
     depth = 1
     x = loop_final_layer.unweighted_layer_list_tensors(trial,1,1,[input_layer])
-    x = loop_final_layer.layer_loop(trial,1,1,x[-1],x,only_layers=["CNN","MLP","MHA"])
-    x = loop_final_layer.layer_loop(trial, 1, 1, x[-1],x,only_layers=["CNN"])
+    x = loop_final_layer.layer_loop(trial,1,1,x[-1],x,only_layers=["MHA"])
+    x = loop_final_layer.layer_loop(trial, 1, 1, x[-1],x,only_layers=["MLP"])
 
 
 
@@ -320,11 +319,17 @@ def objective(trial,x_train=x_train[:30],y_train=y_train[:30],x_test=x_test[:30]
         metrics=["accuracy"]
     )
 
+    model.summary()
+
+    # Save the Keras model with the unique filename
+    model.save(f'best_model_optuna_v12_{trial.number}.h5')
+    model = tf.keras.models.load_model(f'best_model_optuna_v12_0.h5')
+    exit()
     model.fit(x_train, y_train, epochs=1, validation_data=(x_test, y_test), verbose=1)
 
     _, accuracy = model.evaluate(x_test, y_test)
 
     return accuracy
-study = optuna.create_study(direction="maximize")
+study = optuna.create_study(direction="maximize",pruner=optuna.pruners.PercentilePruner(percentile=0.3,n_warmup_steps=12))
 study.optimize(objective, n_trials=100)
 

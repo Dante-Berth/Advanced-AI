@@ -1,6 +1,6 @@
 import tensorflow as tf
 from Fromtwotensorsintoonetensor import R_ListTensor
-
+@tf.keras.utils.register_keras_serializable()
 class MetaPoolingLayer(tf.keras.layers.Layer):
     """
     MetaPoolingLayer generalizes the concept of the pooling layer, can handle input of different size either 3 or either 4
@@ -50,7 +50,7 @@ class MetaPoolingLayer(tf.keras.layers.Layer):
         return self.weight_max * self.max_pooling_layer(
             inputs) + self.weight_average * self.average_pooling_layer(inputs)
 
-
+@tf.keras.utils.register_keras_serializable()
 class CNN_Layer(tf.keras.layers.Layer):
     """
     CNN_layer generalizes the concept of CNN,  can handle input of different size either 3 or either 4

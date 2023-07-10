@@ -2,7 +2,7 @@ import tensorflow as tf
 from Fromtwotensorsintoonetensor import R_ListTensor
 from CNN.CustomCNN import MetaPoolingLayer
 
-
+@tf.keras.utils.register_keras_serializable()
 class ReductionLayerSVD(tf.keras.layers.Layer):
     def __init__(self, r):
         super(ReductionLayerSVD, self).__init__()
@@ -30,7 +30,7 @@ class ReductionLayerSVD(tf.keras.layers.Layer):
         s, U, V = tf.linalg.svd(inputs)
         return self.rank_r_approx(s, U, V, self.r)
 
-
+@tf.keras.utils.register_keras_serializable()
 class ReductionLayerPooling(tf.keras.layers.Layer):
     def __init__(self, ratio_pool_size: int, ratio_strides: int, ratio_dense: int, pooling_layer_name: str):
         super(ReductionLayerPooling, self).__init__()
