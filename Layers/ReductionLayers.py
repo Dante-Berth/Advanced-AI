@@ -103,3 +103,5 @@ if __name__ == "__main__":
     print("##############################################")
     print(ReductionLayerPooling(4, 4, 4, "AveragePooling2D")(tensor_3).shape)
     #print(ReductionLayerPooling(5, 6, 2, "MetaPoolingLayer")([tensor_3, tensor_4]).shape)
+
+
