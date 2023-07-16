@@ -1,14 +1,14 @@
 import tensorflow as tf
 @tf.keras.utils.register_keras_serializable()
-class R_ListTensor(tf.keras.layers.Layer):
+class RListTensor(tf.keras.layers.Layer):
     """
     Custom Keras layer that performs element-wise addition of tensors with optional padding.
     """
-    def __init__(self,two_vectors=False):
+    def __init__(self,two_vectors=False,**kwargs):
         """
         Initializes a new instance of the R_ListTensor layer.
         """
-        super(R_ListTensor, self).__init__()
+        super(RListTensor, self).__init__(**kwargs)
         self.instance_padding = True
         self.two_vectors = two_vectors
 
@@ -118,11 +118,33 @@ class R_ListTensor(tf.keras.layers.Layer):
         self.padding_1 = padding_1
         self.padding_2 = padding_2
         self.instance_padding = False
+    def get_config(self):
+        config = super(RListTensor, self).get_config()
+        return config
 
 
 
+if __name__=="__main__":
 
+    vector_1 = tf.keras.layers.Input(shape=(12, 5, 6, 2))
+    vector_2 = tf.keras.layers.Input(shape=(10, 8, 14))
+    ouputs = RListTensor()([vector_1, vector_2])
 
+    model = tf.keras.models.Model(inputs=[vector_1,vector_2], outputs=ouputs)
+    model.compile(
+        optimizer="Adam",
+        loss=tf.keras.losses.SparseCategoricalCrossentropy(),
+        metrics=["accuracy"]
+    )
+    print("Model before the loading")
+    model.summary()
+
+    PATH = 'testing_model_custom_activation_layer.h5'
+    model.save(PATH)
+    model = tf.keras.models.load_model(PATH)
+    print("Model loaded")
+    print(model.summary())
+"""
 if __name__=="__main__":
 
     vector_1 = tf.ones(shape=(12, 5, 6,2))
@@ -131,4 +153,4 @@ if __name__=="__main__":
     #print(R_ListTensor()([vector_1]))
     multi_head_attention_layer = tf.keras.layers.MultiHeadAttention(num_heads = 2, value_dim=8, key_dim=5)
     print(multi_head_attention_layer(*R_ListTensor(two_vectors=True)([vector_1, vector_2])))
-
+"""
