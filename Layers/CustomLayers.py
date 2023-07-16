@@ -1,6 +1,6 @@
 import tensorflow as tf
 from Activation import CustomActivationLayers
-from Fromtwotensorsintoonetensor import R_ListTensor
+from Fromtwotensorsintoonetensor import RListTensor
 
 
 def all_combination_list(input_liste):
@@ -30,38 +30,10 @@ def all_combination_list(input_liste):
 
 @tf.keras.utils.register_keras_serializable()
 class LinalgMonolayer(tf.keras.layers.Layer):
-    """
-    tensor_shape_four = tf.random.uniform((32, 24, 6, 4))
-    tensor_shape_three = tf.random.uniform((32, 24, 6))
-    adjoint
-    (32, 6, 24)
-    adjoint
-    (32, 24, 4, 6)
-    l2_normalize
-    (32, 24, 6)
-    l2_normalize
-    (32, 24, 6, 4)
-    matrix_transpose
-    (32, 6, 24)
-    matrix_transpose
-    (32, 24, 4, 6)
-    normalize
-    (32, 24, 6)
-    normalize
-    (32, 24, 6, 4)
-    qr
-    (32, 24, 6)
-    qr
-    (32, 24, 6, 4)
-    svd
-    (32, 6)
-    svd
-    (32, 24, 4)
-    """
-    def __init__(self,linalg_mono_functions):
+    def __init__(self,linalg_mono_functions,**kwargs):
         self.linalg_mono_functions = linalg_mono_functions
         self.linalg_layer = getattr(tf.linalg, self.linalg_mono_functions)
-        super(LinalgMonolayer, self).__init__()
+        super(LinalgMonolayer, self).__init__(**kwargs)
 
     @staticmethod
     def get_name():
@@ -73,7 +45,7 @@ class LinalgMonolayer(tf.keras.layers.Layer):
         }
     def build(self, input_shape):
         if isinstance(input_shape,list):
-            self.R_ListTensor = R_ListTensor()
+            self.R_ListTensor = RListTensor()
 
 
 
@@ -88,18 +60,23 @@ class LinalgMonolayer(tf.keras.layers.Layer):
                 return output
         else:
             return self.linalg_layer(input)
+    def get_config(self):
+        config = super(LinalgMonolayer, self).get_config()
+        config.update({
+            'linalg_mono_functions': self.linalg_mono_functions
+        })
+        return config
 
 
-
-
+@tf.keras.utils.register_keras_serializable()
 class SignalLayer(tf.keras.layers.Layer):
     """
     SignalLayer proposes several Fourrier transforms.
     """
-    def __init__(self,signal_name):
+    def __init__(self,signal_name,**kwargs):
         self.signal_name = signal_name
         self.signal_layer = getattr(tf.signal, self.signal_name)
-        super(SignalLayer, self).__init__()
+        super(SignalLayer, self).__init__(**kwargs)
 
     @staticmethod
     def get_name():
@@ -111,9 +88,14 @@ class SignalLayer(tf.keras.layers.Layer):
         }
     def build(self, input_shape):
         if isinstance(input_shape,list):
-            self.R_ListTensor = R_ListTensor()
+            self.R_ListTensor = RListTensor()
 
-
+    def get_config(self):
+        config = super(SignalLayer, self).get_config()
+        config.update({
+            'signal_name': self.signal_name
+        })
+        return config
 
     def call(self, input):
         if isinstance(input,list):
@@ -129,6 +111,27 @@ class SignalLayer(tf.keras.layers.Layer):
 
 
 if __name__ == "__main__":
+    vector_1 = tf.keras.layers.Input(shape=(12, 5, 6, 2))
+    signallayer = SignalLayer("dct")
+    ouputs = signallayer(vector_1)
+
+    model = tf.keras.models.Model(inputs=vector_1, outputs=ouputs)
+    model.compile(
+        optimizer="Adam",
+        loss=tf.keras.losses.SparseCategoricalCrossentropy(),
+        metrics=["accuracy"]
+    )
+    print("Model before the loading")
+    model.summary()
+
+    PATH = 'testing_model_custom_activation_layer.h5'
+    model.save(PATH)
+    model = tf.keras.models.load_model(PATH)
+    print("Model loaded")
+    print(model.summary())
+    vector_1 = tf.ones(shape=(12, 12, 5, 6, 2))
+    print(model.predict(vector_1))
+    """
     tensor_3 = tf.ones((12, 24, 36))
     tensor_4 = tf.ones((12, 24, 36, 48))
 
@@ -155,3 +158,4 @@ if __name__ == "__main__":
     )[2].shape)
 
     print("success")
+    """

@@ -1,5 +1,5 @@
 import tensorflow as tf
-from Fromtwotensorsintoonetensor import R_ListTensor
+from Fromtwotensorsintoonetensor import RListTensor
 from CNN.CustomCNN import MetaPoolingLayer
 
 @tf.keras.utils.register_keras_serializable()
@@ -26,7 +26,7 @@ class ReductionLayerSVD(tf.keras.layers.Layer):
 
     def call(self, inputs):
         if isinstance(inputs, list):
-            inputs = R_ListTensor()(inputs)
+            inputs = RListTensor()(inputs)
         s, U, V = tf.linalg.svd(inputs)
         return self.rank_r_approx(s, U, V, self.r)
 
@@ -56,7 +56,7 @@ class ReductionLayerPooling(tf.keras.layers.Layer):
 
     def build(self, input_shape):
         if isinstance(input_shape, list):
-            self.R_ListTensor = R_ListTensor()
+            self.R_ListTensor = RListTensor()
             input_shape = self.R_ListTensor.get_output_shape(input_shape)
 
         self.pool_size = max(min(max(input_shape[1] * self.ratio_pool_size // 10,1),input_shape[-2]-1),1)

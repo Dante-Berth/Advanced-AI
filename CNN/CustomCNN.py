@@ -1,5 +1,5 @@
 import tensorflow as tf
-from Fromtwotensorsintoonetensor import R_ListTensor
+from Fromtwotensorsintoonetensor import RListTensor
 @tf.keras.utils.register_keras_serializable()
 class MetaPoolingLayer(tf.keras.layers.Layer):
     """
@@ -56,7 +56,7 @@ class CNN_Layer(tf.keras.layers.Layer):
     CNN_layer generalizes the concept of CNN,  can handle input of different size either 3 or either 4
     """
 
-    def __init__(self, filters: int, kernel_size: int, activation: tf.keras.activations, pool_size: int, strides: int, pooling_layer_name: str):
+    def __init__(self, filters: int, kernel_size: int, activation: tf.keras.activations, pool_size: int, strides: int, pooling_layer_name: str,**kwargs):
         """
         Initializes a CNN_Layer object.
 
@@ -74,7 +74,7 @@ class CNN_Layer(tf.keras.layers.Layer):
         Raises:
             None
         """
-        super(CNN_Layer, self).__init__()
+        super(CNN_Layer, self).__init__(**kwargs)
         self.filters = filters
         self.kernel_size = kernel_size
         self.activation = getattr(tf.keras.activations, activation)
@@ -101,7 +101,7 @@ class CNN_Layer(tf.keras.layers.Layer):
 
     def build(self, input_shape):
         if isinstance(input_shape,list):
-            self.R_ListTensor = R_ListTensor()
+            self.R_ListTensor = RListTensor()
             input_shape = self.R_ListTensor.get_output_shape(input_shape)
 
         if self.pooling_layer_name == "MetaPoolingLayer":
@@ -136,6 +136,17 @@ class CNN_Layer(tf.keras.layers.Layer):
                                                            data_format="channels_last")
         self.batch_norm_1 = tf.keras.layers.BatchNormalization()
         self.batch_norm_2 = tf.keras.layers.BatchNormalization()
+    def get_config(self):
+        config = super(CNN_Layer, self).get_config()
+        config.update({
+            'filters': self.filters,
+            'kernel_size': self.kernel_size,
+            'activation': tf.keras.activations.serialize(self.activation),
+            'pool_size': self.pool_size,
+            'strides': self.strides,
+            'pooling_layer_name': self.pooling_layer_name,
+        })
+        return config
 
     def call(self, input, **kwargs):
         if isinstance(input,list):
@@ -148,6 +159,28 @@ class CNN_Layer(tf.keras.layers.Layer):
         x = self.batch_norm_2(x)
         return x
 if __name__=="__main__":
+    vector_1 = tf.keras.layers.Input(shape=(12, 5, 6, 2))
+    vector_2 = tf.keras.layers.Input(shape=(10, 8, 14))
+    a = CNN_Layer(filters=10, kernel_size=10, activation="gelu", pool_size=10, strides=10,
+                  pooling_layer_name="AveragePooling1D")
+    ouputs = a(vector_2)
+
+    model = tf.keras.models.Model(inputs=vector_2, outputs=ouputs)
+    model.compile(
+        optimizer="Adam",
+        loss=tf.keras.losses.SparseCategoricalCrossentropy(),
+        metrics=["accuracy"]
+    )
+    print("Model before the loading")
+    model.summary()
+
+    PATH = 'testing_model_custom_activation_layer.h5'
+    model.save(PATH)
+    model = tf.keras.models.load_model(PATH)
+    print("Model loaded")
+    print(model.summary())
+
+    """
     tensor_3 = tf.ones((12,24,36))
     tensor_4 = tf.ones((12,24,36,48))
     a = CNN_Layer(filters=10, kernel_size=10, activation="gelu", pool_size=10, strides=10, pooling_layer_name="AveragePooling1D")
@@ -156,6 +189,6 @@ if __name__=="__main__":
     print(CNN_Layer(40, 2, "gelu", 3, 3, "MetaPoolingLayer")(tensor_4))
     print(CNN_Layer(3, 2, "gelu", 3, 3, "MetaPoolingLayer")([tensor_4,tensor_3]))
     print(CNN_Layer(3, 2, "gelu", 3, 3, "MetaPoolingLayer")([tensor_3, tensor_3]))
-
+    """
 
 
