@@ -4,8 +4,8 @@ from CNN.CustomCNN import MetaPoolingLayer
 
 @tf.keras.utils.register_keras_serializable()
 class ReductionLayerSVD(tf.keras.layers.Layer):
-    def __init__(self, r):
-        super(ReductionLayerSVD, self).__init__()
+    def __init__(self, r,**kwargs):
+        super(ReductionLayerSVD, self).__init__(**kwargs)
         self.r = r
 
     @staticmethod
@@ -29,16 +29,26 @@ class ReductionLayerSVD(tf.keras.layers.Layer):
             inputs = RListTensor()(inputs)
         s, U, V = tf.linalg.svd(inputs)
         return self.rank_r_approx(s, U, V, self.r)
+    def get_config(self):
+        config = super(ReductionLayerSVD, self).get_config()
+        config.update({
+            'r': self.r
+        })
+        return config
 
 @tf.keras.utils.register_keras_serializable()
 class ReductionLayerPooling(tf.keras.layers.Layer):
-    def __init__(self, ratio_pool_size: int, ratio_strides: int, ratio_dense: int, pooling_layer_name: str):
-        super(ReductionLayerPooling, self).__init__()
+    def __init__(self, ratio_pool_size: int, ratio_strides: int, ratio_dense: int, pooling_layer_name: str,pooling_layer=None,
+                 pool_size=None,strides=None, dense=None,**kwargs):
+        super(ReductionLayerPooling, self).__init__(**kwargs)
         self.ratio_pool_size = ratio_pool_size
         self.ratio_strides = ratio_strides
         self.ratio_dense = ratio_dense
         self.pooling_layer_name = pooling_layer_name
-        self.pooling_layer = None
+        self.pooling_layer = pooling_layer
+        self.pool_size = pool_size
+        self.strides = strides
+        self.dense_layer = dense
 
     @staticmethod
     def get_name():
@@ -103,5 +113,25 @@ if __name__ == "__main__":
     print("##############################################")
     print(ReductionLayerPooling(4, 4, 4, "AveragePooling2D")(tensor_3).shape)
     #print(ReductionLayerPooling(5, 6, 2, "MetaPoolingLayer")([tensor_3, tensor_4]).shape)
+    vector_1 = tf.keras.layers.Input(shape=(5, 6, 2))
+    signallayer = ReductionLayerPooling(4, 4, 4, "AveragePooling2D")
+    ouputs = signallayer(vector_1)
+
+    model = tf.keras.models.Model(inputs=vector_1, outputs=ouputs)
+    model.compile(
+        optimizer="Adam",
+        loss=tf.keras.losses.SparseCategoricalCrossentropy(),
+        metrics=["accuracy"]
+    )
+    print("Model before the loading")
+    model.summary()
+
+    PATH = 'testing_model_custom_activation_layer.h5'
+    model.save(PATH)
+    model_2 = tf.keras.models.load_model(PATH)
+    print("Model loaded")
+    print(model_2.summary())
+    vector_1 = tf.ones(shape=(12, 5, 6, 2))
+    print(model_2.predict(vector_1))
 
 

@@ -111,8 +111,8 @@ class SignalLayer(tf.keras.layers.Layer):
 
 
 if __name__ == "__main__":
-    vector_1 = tf.keras.layers.Input(shape=(12, 5, 6, 2))
-    signallayer = SignalLayer("dct")
+    vector_1 = tf.keras.layers.Input(shape=(5, 6, 2))
+    signallayer = LinalgMonolayer("svd")
     ouputs = signallayer(vector_1)
 
     model = tf.keras.models.Model(inputs=vector_1, outputs=ouputs)
@@ -129,7 +129,7 @@ if __name__ == "__main__":
     model = tf.keras.models.load_model(PATH)
     print("Model loaded")
     print(model.summary())
-    vector_1 = tf.ones(shape=(12, 12, 5, 6, 2))
+    vector_1 = tf.ones(shape=(12, 5, 6, 2))
     print(model.predict(vector_1))
     """
     tensor_3 = tf.ones((12, 24, 36))
