@@ -1,5 +1,5 @@
 import tensorflow as tf
-from Fromtwotensorsintoonetensor import R_ListTensor
+from Fromtwotensorsintoonetensor import RListTensor
 from tensorflow import keras
 @tf.keras.utils.register_keras_serializable()
 class MultiHeadAttention_Layer(tf.keras.layers.Layer):
@@ -8,8 +8,7 @@ class MultiHeadAttention_Layer(tf.keras.layers.Layer):
     """
 
     def __init__(self, num_heads: int, key_dim: int, value_dim: int, dropout: float, self_attention: str, **kwargs):
-        super(MultiHeadAttention_Layer,self).__init__()
-        super().__init__(**kwargs)
+        super(MultiHeadAttention_Layer,self).__init__(**kwargs)
         self.num_heads = num_heads
         self.key_dim = key_dim
         self.value_dim = value_dim
@@ -18,12 +17,22 @@ class MultiHeadAttention_Layer(tf.keras.layers.Layer):
             self_attention = True
         else:
             self_attention = False
-            self.same_dim_two_tensors = R_ListTensor(two_vectors=True)
+            self.same_dim_two_tensors = RListTensor(two_vectors=True)
         self.self_attention = self_attention
         self.multiheadattention = tf.keras.layers.MultiHeadAttention(num_heads=self.num_heads, key_dim=self.key_dim, dropout=self.dropout,
                                                        value_dim=self.value_dim)
 
+    def get_config(self):
+        config = super(MultiHeadAttention_Layer, self).get_config()
+        config.update({
+            'num_heads': self.num_heads,
+            'key_dim':self.key_dim,
+            'value_dim': self.value_dim,
+            'dropout': self.dropout,
+            'self_attention': self.self_attention
 
+        })
+        return config
 
     @staticmethod
     def get_name():
@@ -63,3 +72,29 @@ if __name__=="__main__":
     print(c([tensor_4,tensor_3]))
     print(d([tensor_3, tensor_3]))
     print(e([tensor_4, tensor_3]))
+
+    f = MultiHeadAttention_Layer(num_heads=10, value_dim=10, key_dim=20, dropout=25, self_attention="True")
+    vector_1 = tf.keras.layers.Input(shape=(5, 12, 2))
+    vector_2 = tf.keras.layers.Input(shape=(5, 12))
+    vector_3 = [vector_1, vector_2]
+    ouputs = f(vector_3)
+
+    model = tf.keras.models.Model(inputs=[vector_1, vector_2], outputs=ouputs)
+    model.compile(
+        optimizer="Adam",
+        loss=tf.keras.losses.SparseCategoricalCrossentropy(),
+        metrics=["accuracy"]
+    )
+    print("Model before the loading")
+    model.summary()
+
+    PATH = 'testing_model_custom_activation_layer.h5'
+    model.save(PATH)
+    model_2 = tf.keras.models.load_model(PATH)
+    print("Model loaded")
+    print(model_2.summary())
+
+    vector_1 = tf.ones(shape=(12, 5, 12, 2))
+    vector_2 = tf.ones(shape=(12, 5, 12))
+    vector_3 = [vector_1, vector_2]
+    print(model_2.predict(vector_3))
