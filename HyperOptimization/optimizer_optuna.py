@@ -6,7 +6,7 @@ from MLP.CustomPerceptron import Perceptron_Layer
 from RNN.CustomRNN import R_RNN_Layer
 #from Transformers.CustomTransformers import TransformerEncoderBlock_layer, R_TransformerEncoderBlock_layer
 from Layers.CustomLayers import SignalLayer, LinalgMonolayer
-from Fromtwotensorsintoonetensor import R_ListTensor
+from Fromtwotensorsintoonetensor import RListTensor
 from Transformers.CustomMultiHeadAttention import MultiHeadAttention_Layer
 from Layers.ReductionLayers import ReductionLayerSVD,ReductionLayerPooling
 import tensorflow as tf
@@ -176,7 +176,7 @@ class final_layer:
     @staticmethod
     def Residual(trial, i, j, x, y=None):
         if y is not None:
-            return R_ListTensor()([x,y])
+            return RListTensor()([x, y])
         else:
             return x
 
