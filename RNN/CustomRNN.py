@@ -90,14 +90,10 @@ class RNN_Layer(tf.keras.layers.Layer):
         x = self.rnn_layer(x)
         return self.reduction_layer_output(x)
 @tf.keras.utils.register_keras_serializable()
-class R_RNN_Layer(tf.keras.layers.Layer):
-    def __init__(self, rnn_layer, units, dropout, recurrent_dropout,
-                 reduction_factor_input, reduction_factor_output,**kwargs):
+class R_RNN_Layer(RNN_Layer):
+    def __init__(self,**kwargs):
         super(R_RNN_Layer, self).__init__(**kwargs)
         self.reshape_layer = Reshape_Layer_3D()
-        self.rnn_layer = RNN_Layer(rnn_layer, units, dropout, recurrent_dropout,
-                                        reduction_factor_input, reduction_factor_output)
-        self.R_ListTensor = None
 
     @staticmethod
     def get_name():
@@ -120,14 +116,13 @@ class R_RNN_Layer(tf.keras.layers.Layer):
             input_shape = self.R_ListTensor.get_output_shape(input_shape)
         self.reshape_layer.build(input_shape)
         reshaped_shape = self.reshape_layer.compute_output_shape(input_shape)
-        self.rnn_layer.build(reshaped_shape)
+        super(RNN_Layer, self).build(reshaped_shape)
 
     def call(self, inputs):
         if isinstance(inputs,list):
             inputs = self.R_ListTensor.call(inputs)
-
         x = self.reshape_layer.call(inputs)
-        x = self.rnn_layer.call(x)
+        x = super(RNN_Layer, self).call(x)
         return x
     def get_config(self):
         config = super(R_RNN_Layer, self).get_config()
@@ -141,7 +136,7 @@ if __name__ == "__main__":
 
 
     # Create an instance of ReshapeAndRNNLayer
-    reshape_rnn_layer = R_RNN_Layer(rnn_layer="LSTM", units=12, dropout=0.3, recurrent_dropout=0.3,
+    reshape_rnn_layer = R_RNN_Layer(rnn_layer_str="LSTM", units=12, dropout=0.3, recurrent_dropout=0.3,
                                            reduction_factor_input=2, reduction_factor_output=2)
 
     # Pass the input tensor through the layer
@@ -153,7 +148,7 @@ if __name__ == "__main__":
     print(output.shape)
 
     # Create an instance of ReshapeAndRNNLayer
-    reshape_rnn_layer = R_RNN_Layer(rnn_layer="LSTM", units=12, dropout=0.3, recurrent_dropout=0.3,
+    reshape_rnn_layer = R_RNN_Layer(rnn_layer_str="LSTM", units=12, dropout=0.3, recurrent_dropout=0.3,
                                            reduction_factor_input=2, reduction_factor_output=2)
 
     # Pass the input tensor through the layer
@@ -161,8 +156,8 @@ if __name__ == "__main__":
 
     # Print the output shape
     print(output.shape)
-    rnn_layer_test = R_RNN_Layer(rnn_layer="LSTM", units=12, dropout=0.3, recurrent_dropout=0.3,
-                                    reduction_factor_input=2, reduction_factor_output=2)
+    rnn_layer_test = R_RNN_Layer(rnn_layer_str="LSTM", units=12, dropout=0.3, recurrent_dropout=0.3,
+                                           reduction_factor_input=2, reduction_factor_output=2)
     vector_1 = tf.keras.layers.Input(shape=(5, 12, 2))
     vector_2 = tf.keras.layers.Input(shape=(5,12))
     vector_3 = [vector_1, vector_2]
@@ -182,7 +177,7 @@ if __name__ == "__main__":
     model_2 = tf.keras.models.load_model(PATH)
     print("Model loaded")
     print(model_2.summary())
-    vector_1 = tf.ones(shape=(12, 5, 6, 2))
-    vector_2 = tf.ones(shape=(12, 5, 6))
+    vector_1 = tf.ones(shape=(12, 5, 12, 2))
+    vector_2 = tf.ones(shape=(12, 5, 12))
     print(model_2.predict([vector_1,vector_2]))
 
