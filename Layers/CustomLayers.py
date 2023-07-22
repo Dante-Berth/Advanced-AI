@@ -41,7 +41,7 @@ class LinalgMonolayer(tf.keras.layers.Layer):
     @staticmethod
     def get_layer_hyperparemeters():
         return {
-            "hyperparameter_linalg_mono_functions": ['l2_normalize',  'matrix_transpose', 'normalize', 'qr', 'svd']
+            "hyperparameter_linalg_mono_functions": ['l2_normalize',  'matrix_transpose', 'normalize', 'qr']
         }
     def build(self, input_shape):
         if isinstance(input_shape,list):
@@ -103,10 +103,8 @@ class SignalLayer(tf.keras.layers.Layer):
         if self.signal_name in ["rfft", "rfft2d", "dct"]:
             return tf.cast(self.signal_layer(input), dtype=tf.dtypes.float32)
         else:
-            return tf.cast(
-                self.signal_layer((tf.cast(input, dtype=tf.dtypes.complex64))),
-                dtype=tf.dtypes.float32,
-            )
+            return tf.math.real(self.signal_layer((tf.cast(input, dtype=tf.dtypes.complex64))))
+
 
 
 
