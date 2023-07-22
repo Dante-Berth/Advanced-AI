@@ -3,7 +3,7 @@ import optuna
 import os
 from CNN.CustomCNN import CNN_Layer
 from MLP.CustomPerceptron import Perceptron_Layer
-from RNN.CustomRNN import R_RNN_Layer
+from RNN.CustomRNN import RNN_Layer
 #from Transformers.CustomTransformers import TransformerEncoderBlock_layer, R_TransformerEncoderBlock_layer
 from Layers.CustomLayers import SignalLayer, LinalgMonolayer
 from Fromtwotensorsintoonetensor import RListTensor
@@ -134,9 +134,9 @@ class final_layer:
     @staticmethod
     def RNN(trial,i,j,x,y=None):
         if y is not None:
-            return R_RNN_Layer(*loop_initializer(R_RNN_Layer, trial, i, j))([x,y])
+            return RNN_Layer(*loop_initializer(RNN_Layer, trial, i, j))([x,y])
         else:
-            return R_RNN_Layer(*loop_initializer(R_RNN_Layer, trial, i, j))(x)
+            return RNN_Layer(*loop_initializer(RNN_Layer, trial, i, j))(x)
 
     @staticmethod
     def MHA(trial, i, j, x, y=None): #MultiHeadAttention
@@ -205,7 +205,7 @@ class final_layer:
     @staticmethod
     def reduction_layer(trial, i, j, x, y=None, only_reduction_layers=None):
         if only_reduction_layers is None:
-            only_reduction_layers = ["ReductionLayerSVD", "ReductionLayerPooling"]
+            only_reduction_layers = ["ReductionLayerPooling"]
 
         if len(only_reduction_layers)==1:
             name_layer = only_reduction_layers[0]
@@ -215,12 +215,61 @@ class final_layer:
         return z
 
 
-
-
-
-class loop_final_layer:
+class encoder_temporal_layer:
     @staticmethod
-    def layer_loop(trial, i, j, x, list_y=None, only_layers=None):
+    def temporal_layer_data(trial, i, j, input_tensor, list_tensors=None):
+        list_outputs = []
+        stochastic = trial.suggest_int(f"stochastic_nas_layer_{i}_{j}", 0, 1, step=1)
+        reduction_layer = trial.suggest_int(f"reduction_layer_{i}_{j}", 0, 1, step=1)
+        if isinstance(list_tensors, tf.Tensor):
+            list_y = [list_tensors]
+        # CNN or RNN tries to encode the information
+        num_layers = trial.suggest_int(f"num_layers_{i}_{j}", 1, 10)
+
+        tensor_x = final_layer.weighted_layer(trial, i - 0.75, j, x=input_tensor,
+                                       only_layers=["MHA"])
+        tensor_x = final_layer.weighted_layer(trial, i - 0.5, j, x=tensor_x,
+                                              only_layers=["RNN"])
+        tensor_x = final_layer.weighted_layer(trial, i - 0.25, j, x=tensor_x,
+                                              only_layers=["RNN"])
+        tensor_z = final_layer.weighted_layer(trial, i - 0.15, j, x=tensor_x,
+                                              only_layers=None)
+        list_outputs.append(tensor_z)
+
+        tensor_x = input_tensor
+        for num_layer in range(num_layers):
+            if list_tensors is None:
+                tensor_y = None
+            else:
+                if stochastic:
+                    index_list_tensors = random.randint(0, len(list_tensors) - 1)
+                else:
+                    index_list_tensors = -1
+                tensor_y = list_tensors[index_list_tensors]
+            tensor_x = final_layer.Residual(trial, i, j, tensor_x, y=final_layer.unweighted_layer(trial, i + num_layer, j, x=tensor_x, only_layers=None))
+            tensor_x = final_layer.weighted_layer(trial, i + num_layer, j, x=tensor_x, y=tensor_y, only_layers=["CNN","MLP"])
+            if reduction_layer:
+                tensor_x = final_layer.reduction_layer(trial, i + num_layer + 0.5, j, x=tensor_x,
+                                                only_reduction_layers=["ReductionLayerPooling"])
+
+        tensor_x = final_layer.weighted_layer(trial, i + num_layer + 1, j,x=tensor_x,
+                                       only_layers=["MHA"])
+        list_outputs.append(tensor_x)
+
+
+        x = final_layer.weighted_layer(trial, i +num_layer + 2, j, tensor_x, tensor_z,
+                                       only_layers=["MLP"])
+        x = final_layer.weighted_layer(trial, i + num_layer + 3, j, x, None,
+                                       only_layers=["MLP"])
+        x = final_layer.weighted_layer(trial, i + num_layer + 4, j, x, None,
+                                       only_layers=["MLP"])
+        list_outputs.append(x)
+
+
+        return list_outputs
+class usefull_master_layer:
+    @staticmethod
+    def layer_loop(trial, i, j, x, list_y=None):
         """
 
         :param trial: trial object
@@ -232,6 +281,7 @@ class loop_final_layer:
         """
         list_outputs = []
         stochastic = trial.suggest_int(f"stochastic_nas_layer_{i}_{j}",0,1,step=1)
+        print("stochastic",stochastic)
         if list_y is None:
             list_y = [None]
         if isinstance(list_y, tf.Tensor):
@@ -250,7 +300,7 @@ class loop_final_layer:
                     index_list_y = -1
 
                 x = final_layer.weighted_layer(trial, i+num_layer, j, x, list_y[index_list_y],only_layers)
-                x = final_layer.reduction_layer(trial, i+num_layer, j, x, list_y[index_list_y],only_reduction_layers=["ReductionLayerSVD"])
+                x = final_layer.reduction_layer(trial, i+num_layer, j, x, list_y[index_list_y],only_reduction_layers=["ReductionLayerPooling"])
 
                 list_outputs.append(x)
 
@@ -258,7 +308,7 @@ class loop_final_layer:
             return list_outputs
 
     @staticmethod
-    def unweighted_layer_list_tensors(trial,i,j,list_tensors,only_layers=None):
+    def master_unweighted_layer_list_tensors(trial,i,j,list_tensors,only_layers=None):
         list_outputs = []
         for k in range(len(list_tensors)):
             tensor = list_tensors[k]
@@ -276,25 +326,34 @@ class loop_final_layer:
 def objective(trial,x_train=x_train[:30],y_train=y_train[:30],x_test=x_test[:30],y_test=y_test[:30],width=10, depth=10):
 
     input_layer = tf.keras.layers.Input(shape=(28, 28, 1))
-
+    input_layer_2 = input_layer
     dictionnary = {}
     width = 1
     depth = 1
-    x = loop_final_layer.unweighted_layer_list_tensors(trial,1,1,[input_layer])
-    x = loop_final_layer.layer_loop(trial,1,1,x[-1],x,only_layers=["MHA"])
-    x = loop_final_layer.layer_loop(trial, 1, 1, x[-1],x,only_layers=["MLP"])
+    x = encoder_temporal_layer.temporal_layer_data(trial,1,1,input_layer,list_tensors=None)
+    x = final_layer.reduction_layer(trial, 30, 0, x=x[-1],
+                                    only_reduction_layers=["ReductionLayerPooling"])
+    x = tf.keras.layers.Flatten()(x)
 
-
-
+    """
+    x = loop_final_layer.unweighted_layer_list_tensors(trial,1,1,[input_layer,input_layer_2])
+    y = loop_final_layer.layer_loop(trial,1,1,x[-1],x,only_layers=["MHA","CNN"])
+    z = loop_final_layer.layer_loop(trial, 1, 1, y[-1], y, only_layers=["MHA"])
+    z = loop_final_layer.layer_loop(trial, 1, 1, z[-1],z,only_layers=["MLP"])
+    """
+    z = encoder_temporal_layer.temporal_layer_data(trial, 1, 1, input_layer_2, list_tensors=None)
+    z = final_layer.reduction_layer(trial, 30, 0, x=z[-1],
+                                    only_reduction_layers=["ReductionLayerPooling"])
+    z = tf.keras.layers.Flatten()(z)
 
     # Flatten the output
-    x = tf.keras.layers.Flatten()(x[-1])
+    y = tf.keras.layers.Concatenate(axis=-1)([x,z])
 
 
-    output = tf.keras.layers.Dense(10, activation="softmax")(x)
+    output = tf.keras.layers.Dense(10, activation="softmax")(y)
 
     model = tf.keras.models.Model(inputs=input_layer, outputs=output)
-
+    model.summary()
 
     #Optimizer part
     hyperparameters = {
@@ -323,8 +382,8 @@ def objective(trial,x_train=x_train[:30],y_train=y_train[:30],x_test=x_test[:30]
 
     # Save the Keras model with the unique filename
     model.save(f'best_model_optuna_v12_{trial.number}.h5')
-    model = tf.keras.models.load_model(f'best_model_optuna_v12_0.h5')
-    exit()
+    model = tf.keras.models.load_model(f'best_model_optuna_v12_{trial.number}.h5')
+
     model.fit(x_train, y_train, epochs=1, validation_data=(x_test, y_test), verbose=1)
 
     _, accuracy = model.evaluate(x_test, y_test)
