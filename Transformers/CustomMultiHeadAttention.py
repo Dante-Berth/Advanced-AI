@@ -13,6 +13,7 @@ class MultiHeadAttention_Layer(tf.keras.layers.Layer):
         self.key_dim = key_dim
         self.value_dim = value_dim
         self.dropout = dropout // 10 * 0.1
+        self_attention = "False" # putting to false
         if self_attention == "True":
             self_attention = True
         else:
@@ -40,9 +41,9 @@ class MultiHeadAttention_Layer(tf.keras.layers.Layer):
     @staticmethod
     def get_layer_hyperparemeters():
         return {
-            "hyperparameter_num_heads": [1, 10, 1],
-            "hyperparameter_key_dim": [8, 64,],
-            "hyperparameter_value_dim": [8, 64],
+            "hyperparameter_num_heads": [1, 5, 1],
+            "hyperparameter_key_dim": [8, 32],
+            "hyperparameter_value_dim": [8, 32],
             "hyperparameter_dropout": [0, 50, 10],
             "hyperparameter_self_attention": ["True","False"]
         }
@@ -60,8 +61,8 @@ class MultiHeadAttention_Layer(tf.keras.layers.Layer):
             x = self.multiheadattention.call(input, input)
         return x
 if __name__=="__main__":
-    tensor_3 = tf.ones((12,24,36))
-    tensor_4 = tf.ones((12,24,36,48))
+    tensor_3 = tf.ones((28,6,31))
+    tensor_4 = tf.ones((1,1,8))
     a = MultiHeadAttention_Layer(num_heads=10, value_dim=10, key_dim=20,dropout=25,self_attention="False")
     b = MultiHeadAttention_Layer(num_heads=10, value_dim=10, key_dim=20, dropout=25, self_attention="False")
     c = MultiHeadAttention_Layer(num_heads=10, value_dim=10, key_dim=20, dropout=25, self_attention="False")
