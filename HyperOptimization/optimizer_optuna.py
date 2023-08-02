@@ -267,6 +267,14 @@ class encoder_temporal_layer:
 
 
         return list_outputs
+
+    @staticmethod
+    def loop_layer(trial, i, j, input_tensor,only_layers =None):
+        list_outputs = [input_tensor]
+        num_layers = trial.suggest_int(f"num_layers_{i}_{j}", 1, 10)
+        for num_layer in range(num_layers):
+            list_outputs.append(final_layer.weighted_layer(trial, i + num_layer, j, x=list_outputs[-1], y=None, only_layers=only_layers))
+        return list_outputs
 class usefull_master_layer:
     @staticmethod
     def layer_loop(trial, i, j, x, list_y=None):
