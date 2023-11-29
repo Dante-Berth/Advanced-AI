@@ -7,13 +7,13 @@ class MultiHeadAttention_Layer(tf.keras.layers.Layer):
     MultiHeadAttention_Layer is the layer reffered to Multi Head Attention
     """
 
-    def __init__(self, num_heads: int, key_dim: int, value_dim: int, dropout: float, self_attention: str, **kwargs):
+    def __init__(self, num_heads: int, key_dim: int, value_dim: int, dropout: float, self_attention="False", **kwargs):
         super(MultiHeadAttention_Layer,self).__init__(**kwargs)
         self.num_heads = num_heads
         self.key_dim = key_dim
         self.value_dim = value_dim
         self.dropout = dropout // 10 * 0.1
-        self_attention = "False" # putting to false
+        self_attention = self_attention # putting to false
         if self_attention == "True":
             self_attention = True
         else:

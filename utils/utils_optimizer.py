@@ -1,6 +1,9 @@
 import random
+import sys
+
 import optuna
 import os
+sys.path.append('../')
 from CNN.CustomCNN import CNN_Layer
 from MLP.CustomPerceptron import Perceptron_Layer
 from RNN.CustomRNN import RNN_Layer
