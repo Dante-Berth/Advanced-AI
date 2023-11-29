@@ -186,8 +186,8 @@ class final_layer:
 
     @staticmethod
     def weighted_layer(trial, i, j, x, y=None, only_layers=None,timestamp=None):
-        if only_layers is None:
-            only_layers = ["RNN", "MLP", "CNN", "MHA"] #["Transformer", "RNN", "MLP", "CNN"]
+        if only_layers is None or only_layers == [None]:
+            only_layers = ["RNN", "MLP", "CNN", "MHA"]
         if len(only_layers) == 1:
             name_layer = only_layers[0]
         else:
@@ -197,7 +197,7 @@ class final_layer:
 
     @staticmethod
     def unweighted_layer(trial, i, j, x, y=None, only_layers=None,timestamp=None):
-        if only_layers is None:
+        if only_layers is None or only_layers == [None]:
             only_layers = ["Fourrier", "Linalg"]
         if len(only_layers)==1:
             name_layer = only_layers[0]
@@ -217,7 +217,7 @@ class final_layer:
         z = getattr(final_layer, name_layer)(trial, i, j, x, y, timestamp)
         return z
 
-    def loop_weighted_layer(self,trial,i,j,input_tensor,timestamp,possible_layers):
+    def loop_weighted_layer(self,trial,i,j,input_tensor,timestamp,possible_layers=None):
         if possible_layers is None:
             same_layer = trial.suggest_categorical(f"same_layer",["True","False"])
             if same_layer == "True":
@@ -232,7 +232,7 @@ class final_layer:
         list_outputs = []
         list_outputs.append(input_tensor)
         for num in range(nb_layers):
-            x = self.weighted_layer(trial,i,j+num+1,list_outputs[-1],y=None,only_layers=only_layers, timestamp=timestamp)
+            x = self.weighted_layer(trial,i,j+num+1,list_outputs[-1],y=None,only_layers=[only_layers], timestamp=timestamp)
             list_outputs.append(x)
         return list_outputs,i,j+nb_layers
 
@@ -251,7 +251,7 @@ class final_layer:
         list_outputs = []
         list_outputs.append(input_tensor)
         for num in range(nb_layers):
-            x = self.unweighted_layer(trial, i, j+num+1, list_outputs[-1], y=None, only_layers=only_layers, timestamp=timestamp)
+            x = self.unweighted_layer(trial, i, j+num+1, list_outputs[-1], y=None, only_layers=[only_layers], timestamp=timestamp)
             list_outputs.append(x)
         return list_outputs,i,j+nb_layers
 
@@ -369,40 +369,51 @@ class usefull_master_layer:
         del list_tensors
         return list_outputs
 
+def nas_simple_nn(input,trial,timestamp:str):
+    final_layer_instance = final_layer()
+    liste_layer,reseau_a,deep_a = final_layer_instance.loop_weighted_layer(trial=trial,i=0,j=0,input_tensor=input,timestamp=timestamp,possible_layers=None)
+    liste_encoder_layer = []
+    for a in range(len(liste_layer)):
+        loop_chosen = trial.suggest_categorical(f"{timestamp}_boolean",["loop_weighted_layer","loop_unweighted_layer"])
+        liste_layer_i = getattr(final_layer_instance,loop_chosen)(trial,reseau_a+a+1,a,input_tensor=liste_layer[a],timestamp=timestamp)[0]
+        liste_encoder_layer.append(tf.keras.layers.Flatten()(liste_layer_i[-1]))
+    concatenation_encoder_cnn = tf.keras.layers.Concatenate()(liste_encoder_layer)
+    final_output,reseau_a,deep_a = final_layer_instance.loop_weighted_layer(trial=trial,i=reseau_a+len(liste_layer)+2,j=0,input_tensor=concatenation_encoder_cnn,timestamp=timestamp,possible_layers=["MLP"])
+    return final_output
 
+class multiple_simple_nn_3d:
+    def __init__(self,dictionnary:dict,trial):
+        super(multiple_simple_nn_3d).__init__()
+        layer_instance = final_layer()
+        list_inputs = []
+        list_outputs = []
+        for key in dictionnary:
+            input = tf.keras.Input(shape=dictionnary[key]["input_size"])
+            list_inputs.append(input)
+            out = nas_simple_nn(input,trial,dictionnary[key]["timestamp"])
+            list_outputs.append(out)
+
+        list_tensors = [item for sublist in list_outputs for item in sublist]
+        concatenation = tf.keras.layers.Concatenate(axis=1)(list_tensors)
+        mlp = layer_instance.loop_weighted_layer(trial=trial, i=0, j=0,
+                                        input_tensor=concatenation, timestamp="final_timestamp",
+                                        possible_layers=["MLP"])[0]
+        output = tf.keras.layers.Dense(10,activation="softmax")(mlp[-1])
+
+        self.model = tf.keras.Model(inputs=list_inputs, outputs=output)
+    def return_model(self):
+        return self.model
 
 
 
 def objective(trial,x_train=x_train[:30],y_train=y_train[:30],x_test=x_test[:30],y_test=y_test[:30],width=10, depth=10):
 
-    input_layer = tf.keras.layers.Input(shape=(28, 28, 1))
-    input_layer_2 = input_layer
-    dictionnary = {}
-    width = 1
-    depth = 1
-    x = encoder_temporal_layer.temporal_layer_data(trial,1,1,input_layer,list_tensors=None)
-    x = final_layer.reduction_layer(trial, 30, 0, x=x[-1],
-                                    only_reduction_layers=["ReductionLayerPooling"])
-    x = tf.keras.layers.Flatten()(x)
-
-    """
-    x = loop_final_layer.unweighted_layer_list_tensors(trial,1,1,[input_layer,input_layer_2])
-    y = loop_final_layer.layer_loop(trial,1,1,x[-1],x,only_layers=["MHA","CNN"])
-    z = loop_final_layer.layer_loop(trial, 1, 1, y[-1], y, only_layers=["MHA"])
-    z = loop_final_layer.layer_loop(trial, 1, 1, z[-1],z,only_layers=["MLP"])
-    """
-    z = encoder_temporal_layer.temporal_layer_data(trial, 1, 1, input_layer_2, list_tensors=None)
-    z = final_layer.reduction_layer(trial, 30, 0, x=z[-1],
-                                    only_reduction_layers=["ReductionLayerPooling"])
-    z = tf.keras.layers.Flatten()(z)
-
-    # Flatten the output
-    y = tf.keras.layers.Concatenate(axis=-1)([x,z])
-
-
-    output = tf.keras.layers.Dense(10, activation="softmax")(y)
-
-    model = tf.keras.models.Model(inputs=input_layer, outputs=output)
+    dictionnary = {"X_1":{"input_size":(28,28,1),"timestamp":"1m"},
+                   "X_2": {"input_size": (28, 28, 1), "timestamp": "5m"},
+                   "X_3": {"input_size": (28, 28, 1), "timestamp": "1h"},
+                   }
+    meta_archi = multiple_simple_nn_3d(dictionnary,trial)
+    model = meta_archi.return_model()
     model.summary()
 
     #Optimizer part
