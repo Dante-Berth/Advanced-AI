@@ -3,7 +3,7 @@ import sys
 
 import optuna
 import os
-sys.path.append('../')
+
 from CNN.CustomCNN import CNN_Layer
 from MLP.CustomPerceptron import Perceptron_Layer
 from RNN.CustomRNN import RNN_Layer
@@ -48,7 +48,7 @@ def OptunaListElements(name_layer,liste,key,trial):
             return trial.suggest_int(f"{name_layer}{key}", liste[0], liste[1], liste[2])
     elif type(liste[0])==str:
         return trial.suggest_categorical(f"{name_layer}{key}", liste)
-def loop_initializer(layer,trial,i,j):
+def loop_initializer(layer,trial,i,j,timestamp=None):
     """
     Initializes hyperparameters for a layer by suggesting optimal values using Optuna.
 
@@ -67,7 +67,7 @@ def loop_initializer(layer,trial,i,j):
     hyperparameters = layer.get_layer_hyperparemeters()
     name_layer = layer.get_name()
     prefix = "hyperparameter"
-    liste_hyperparameters = [OptunaListElements(f'{name_layer}_deep_{i}_width_{j}',hyperparameters[key],key.split(".")[-1].replace(prefix,""),trial) for key in hyperparameters.keys()]
+    liste_hyperparameters = [OptunaListElements(f'{timestamp}_{name_layer}_deep_{i}_width_{j}',hyperparameters[key],key.split(".")[-1].replace(prefix,""),trial) for key in hyperparameters.keys()]
     return liste_hyperparameters
 
 class Reshape_Layer(tf.keras.layers.Layer):
@@ -123,61 +123,61 @@ class final_layer:
     #    else:
     #        return R_TransformerEncoderBlock_layer(*loop_initializer(R_TransformerEncoderBlock_layer, trial, i, j))([x,x])
     @staticmethod
-    def CNN(trial,i,j,x,y=None):
+    def CNN(trial,i,j,x,y=None,timestamp=None):
         if y is not None:
-            return CNN_Layer(*loop_initializer(CNN_Layer, trial, i, j))([x,y])
+            return CNN_Layer(*loop_initializer(CNN_Layer, trial, i, j, timestamp))([x,y])
         else:
-            return CNN_Layer(*loop_initializer(CNN_Layer, trial, i, j))(x)
+            return CNN_Layer(*loop_initializer(CNN_Layer, trial, i, j,timestamp))(x)
     @staticmethod
-    def MLP(trial,i,j,x,y=None):
+    def MLP(trial,i,j,x,y=None,timestamp=None):
         if y is not None:
-            return Perceptron_Layer(*loop_initializer(Perceptron_Layer, trial, i, j))([x,y])
+            return Perceptron_Layer(*loop_initializer(Perceptron_Layer, trial, i, j, timestamp))([x,y])
         else:
-            return Perceptron_Layer(*loop_initializer(Perceptron_Layer, trial, i, j))(x)
+            return Perceptron_Layer(*loop_initializer(Perceptron_Layer, trial, i, j, timestamp))(x)
     @staticmethod
-    def RNN(trial,i,j,x,y=None):
+    def RNN(trial,i,j,x,y=None,timestamp=None):
         if y is not None:
-            return RNN_Layer(*loop_initializer(RNN_Layer, trial, i, j))([x,y])
+            return RNN_Layer(*loop_initializer(RNN_Layer, trial, i, j, timestamp))([x,y])
         else:
-            return RNN_Layer(*loop_initializer(RNN_Layer, trial, i, j))(x)
+            return RNN_Layer(*loop_initializer(RNN_Layer, trial, i, j, timestamp))(x)
 
     @staticmethod
-    def MHA(trial, i, j, x, y=None): #MultiHeadAttention
+    def MHA(trial, i, j, x, y=None,timestamp=None):
         if y is not None:
-            return MultiHeadAttention_Layer(*loop_initializer(MultiHeadAttention_Layer, trial, i, j))([x, y])
+            return MultiHeadAttention_Layer(*loop_initializer(MultiHeadAttention_Layer, trial, i, j, timestamp))([x, y])
         else:
-            return MultiHeadAttention_Layer(*loop_initializer(MultiHeadAttention_Layer, trial, i, j))(x)
+            return MultiHeadAttention_Layer(*loop_initializer(MultiHeadAttention_Layer, trial, i, j, timestamp))(x)
 
     @staticmethod
-    def ReductionLayerSVD(trial, i, j, x, y=None):
+    def ReductionLayerSVD(trial, i, j, x, y=None,timestamp=None):
         if y is not None:
-            return ReductionLayerSVD(*loop_initializer(ReductionLayerSVD, trial, i, j))([x, y])
+            return ReductionLayerSVD(*loop_initializer(ReductionLayerSVD, trial, i, j, timestamp))([x, y])
         else:
-            return ReductionLayerSVD(*loop_initializer(ReductionLayerSVD, trial, i, j))(x)
+            return ReductionLayerSVD(*loop_initializer(ReductionLayerSVD, trial, i, j, timestamp))(x)
 
     @staticmethod
-    def ReductionLayerPooling(trial, i, j, x, y=None):
+    def ReductionLayerPooling(trial, i, j, x, y=None,timestamp=None):
         if y is not None:
-            return ReductionLayerPooling(*loop_initializer(ReductionLayerPooling, trial, i, j))([x, y])
+            return ReductionLayerPooling(*loop_initializer(ReductionLayerPooling, trial, i, j, timestamp))([x, y])
         else:
-            return ReductionLayerPooling(*loop_initializer(ReductionLayerPooling, trial, i, j))(x)
+            return ReductionLayerPooling(*loop_initializer(ReductionLayerPooling, trial, i, j, timestamp))(x)
 
     @staticmethod
-    def Fourrier(trial, i, j, x, y=None):
+    def Fourrier(trial, i, j, x, y=None,timestamp=None):
         if y is not None:
-            return SignalLayer(*loop_initializer(SignalLayer, trial, i, j))([x,y])
+            return SignalLayer(*loop_initializer(SignalLayer, trial, i, j, timestamp))([x,y])
         else:
-            return SignalLayer(*loop_initializer(SignalLayer, trial, i, j))(x)
+            return SignalLayer(*loop_initializer(SignalLayer, trial, i, j, timestamp))(x)
 
     @staticmethod
-    def Linalg(trial, i, j, x, y=None):
+    def Linalg(trial, i, j, x, y=None,timestamp=None):
         if y is not None:
-            return LinalgMonolayer(*loop_initializer(LinalgMonolayer, trial, i, j))([x, y])
+            return LinalgMonolayer(*loop_initializer(LinalgMonolayer, trial, i, j, timestamp))([x, y])
         else:
-            return LinalgMonolayer(*loop_initializer(LinalgMonolayer, trial, i, j))(x)
+            return LinalgMonolayer(*loop_initializer(LinalgMonolayer, trial, i, j, timestamp))(x)
 
     @staticmethod
-    def Residual(trial, i, j, x, y=None):
+    def Residual(trial, i, j, x, y=None,timestamp=None):
         if y is not None:
             return RListTensor()([x, y])
         else:
@@ -185,28 +185,28 @@ class final_layer:
 
 
     @staticmethod
-    def weighted_layer(trial, i, j, x, y=None, only_layers=None):
+    def weighted_layer(trial, i, j, x, y=None, only_layers=None,timestamp=None):
         if only_layers is None:
             only_layers = ["RNN", "MLP", "CNN", "MHA"] #["Transformer", "RNN", "MLP", "CNN"]
         if len(only_layers) == 1:
             name_layer = only_layers[0]
         else:
-            name_layer = trial.suggest_categorical(f"weighted_layer_{i}_{j}", only_layers)
-        z = getattr(final_layer,name_layer)(trial,i,j,x,y)
+            name_layer = trial.suggest_categorical(f"{timestamp}_weighted_layer_{i}_{j}", only_layers)
+        z = getattr(final_layer,name_layer)(trial,i,j,x,y, timestamp)
         return z
 
     @staticmethod
-    def unweighted_layer(trial, i, j, x, y=None, only_layers=None):
+    def unweighted_layer(trial, i, j, x, y=None, only_layers=None,timestamp=None):
         if only_layers is None:
             only_layers = ["Fourrier", "Linalg"]
         if len(only_layers)==1:
             name_layer = only_layers[0]
         else:
             name_layer = trial.suggest_categorical(f"unweighted_layer_{i}_{j}", only_layers)
-        z = getattr(final_layer, name_layer)(trial, i, j, x, y)
+        z = getattr(final_layer, name_layer)(trial, i, j, x, y, timestamp)
         return z
     @staticmethod
-    def reduction_layer(trial, i, j, x, y=None, only_reduction_layers=None):
+    def reduction_layer(trial, i, j, x, y=None, only_reduction_layers=None,timestamp=None):
         if only_reduction_layers is None:
             only_reduction_layers = ["ReductionLayerPooling"]
 
@@ -214,8 +214,47 @@ class final_layer:
             name_layer = only_reduction_layers[0]
         else:
             name_layer = trial.suggest_categorical(f"reduction_layer_{i}_{j}", only_reduction_layers)
-        z = getattr(final_layer, name_layer)(trial, i, j, x, y)
+        z = getattr(final_layer, name_layer)(trial, i, j, x, y, timestamp)
         return z
+
+    def loop_weighted_layer(self,trial,i,j,input_tensor,timestamp,possible_layers):
+        if possible_layers is None:
+            same_layer = trial.suggest_categorical(f"same_layer",["True","False"])
+            if same_layer == "True":
+                    possible_layers = ["RNN", "MLP", "CNN", "MHA"]
+                    only_layers = trial.suggest_categorical(f'{timestamp}_{i}_{j}_loop_layer', possible_layers)
+            else:
+                only_layers = None
+        else:
+            only_layers = trial.suggest_categorical(f'{timestamp}_{i}_{j}_loop_layer', possible_layers)
+
+        nb_layers =  trial.suggest_int(f'{timestamp}_{i}_{j}_loop_{only_layers}_nb_layer', 1, 8)
+        list_outputs = []
+        list_outputs.append(input_tensor)
+        for num in range(nb_layers):
+            x = self.weighted_layer(trial,i,j+num+1,list_outputs[-1],y=None,only_layers=only_layers, timestamp=timestamp)
+            list_outputs.append(x)
+        return list_outputs,i,j+nb_layers
+
+    def loop_unweighted_layer(self, trial, i, j, input_tensor, timestamp,possible_layers=None):
+        if possible_layers is None:
+            same_layer = trial.suggest_categorical(f"same_layer", ["True", "False"])
+            if same_layer == "True":
+                possible_layers =  ["Fourrier", "Linalg"]
+                only_layers = trial.suggest_categorical(f'{timestamp}_{i}_{j}_loop_layer', possible_layers)
+            else:
+                only_layers = None
+        else:
+            only_layers = trial.suggest_categorical(f'{timestamp}_{i}_{j}_loop_layer', possible_layers)
+
+        nb_layers = trial.suggest_int(f'{timestamp}_{i}_{j}_loop_{only_layers}_nb_layer', 1, 5)
+        list_outputs = []
+        list_outputs.append(input_tensor)
+        for num in range(nb_layers):
+            x = self.unweighted_layer(trial, i, j+num+1, list_outputs[-1], y=None, only_layers=only_layers, timestamp=timestamp)
+            list_outputs.append(x)
+        return list_outputs,i,j+nb_layers
+
 
 
 class encoder_temporal_layer:
